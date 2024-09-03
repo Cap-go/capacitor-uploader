@@ -1,10 +1,27 @@
 import type { PluginListenerHandle } from "@capacitor/core";
 
 export interface uploadOption {
-  id: string;
+  /**
+   * @since 1.0.0
+   * @description The file path of the file to upload
+   */
   filePath: string;
+  /**
+   * @since 1.0.0
+   * @description The url of the server
+   */
   serverUrl: string;
-  notificationTitle: number;
+  /**
+  * @since 1.0.0
+  * @default 'Uploading'
+  * @description The title of the notification
+  * Android only
+  */
+  notificationTitle?: number; 
+  /**
+   * @since 1.0.0
+   * @description The headers to send with the request
+   */
   headers: {
     [key: string]: string;
   }
@@ -23,7 +40,7 @@ export interface UploadEvent {
 }
 
 export interface UploaderPlugin {
-  startUpload(options: uploadOption): Promise<{ value: string }>;
+  startUpload(options: uploadOption): Promise<{ id: string }>;
   removeUpload(options: { id: string }): Promise<void>;
   addListener(
     eventName: "events",

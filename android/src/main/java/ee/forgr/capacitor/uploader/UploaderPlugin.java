@@ -12,11 +12,27 @@ public class UploaderPlugin extends Plugin {
     private Uploader implementation = new Uploader();
 
     @PluginMethod
-    public void echo(PluginCall call) {
-        String value = call.getString("value");
+    public void startUpload(PluginCall call) {
+        String filePath = call.getString("filePath");
+        String serverUrl = call.getString("serverUrl");
+        Map<String, String> headers = call.getMap("headers");
+        String notificationTitle = call.getString("notificationTitle");
+        try {
+            String id = implementation.startUpload(filePath, serverUrl, headers, notificationTitle,);
+            call.resolve(id);
+        } catch (Exception e) {
+            call.reject(e.getMessage());
+        }
+    }
 
-        JSObject ret = new JSObject();
-        ret.put("value", implementation.echo(value));
-        call.resolve(ret);
+    @PluginMethod
+    public void removeUpload(PluginCall call) {
+        String id = call.getString("id");
+        try {
+            implementation.removeUpload(id);
+            call.resolve();
+        } catch (Exception e) {
+            call.reject(e.getMessage());
+        }
     }
 }
