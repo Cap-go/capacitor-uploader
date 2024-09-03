@@ -11,6 +11,16 @@ npm install @capgo/capacitor-uploader
 npx cap sync
 ```
 
+## Android:
+
+Add the following to your `AndroidManifest.xml` file:
+
+```xml
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+```
+
 ## API
 
 <docgen-index>
