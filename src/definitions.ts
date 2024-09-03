@@ -1,4 +1,4 @@
-import type { PluginListenerHandle } from '@capacitor/core';
+import type { PluginListenerHandle } from "@capacitor/core";
 
 export interface uploadOption {
   /**
@@ -30,7 +30,7 @@ export interface uploadOption {
    * @description The method to use for the request
    * @default 'POST'
    */
-  method?: 'PUT' | 'POST';
+  method?: "PUT" | "POST";
   /**
    * @since 1.0.0
    * @description The mime type to use for the request
@@ -53,7 +53,7 @@ export interface UploadEvent {
    *
    * @since 1.0.0
    */
-  name: 'uploading' | 'completed' | 'failed';
+  name: "uploading" | "completed" | "failed";
   /**
    * @since 1.0.0
    * @description The payload of the event
@@ -106,7 +106,7 @@ export interface UploaderPlugin {
    * @returns { PluginListenerHandle }
    */
   addListener(
-    eventName: 'events',
+    eventName: "events",
     listenerFunc: (state: UploadEvent) => void,
   ): Promise<PluginListenerHandle>;
 }

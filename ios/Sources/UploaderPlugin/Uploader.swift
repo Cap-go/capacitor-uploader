@@ -3,13 +3,12 @@ import Capacitor
 import UniformTypeIdentifiers
 import MobileCoreServices
 
-
 @objc public class Uploader: NSObject, URLSessionTaskDelegate {
     private var urlSession: URLSession?
     private var responsesData: [Int: Data] = [:]
     private var tasks: [String: URLSessionTask] = [:]
     private var retries: [String: Int] = [:]
-    
+
     var eventHandler: (([String: Any]) -> Void)?
 
     @objc public func startUpload(_ filePath: String, _ serverUrl: String, _ options: [String: Any], maxRetries: Int = 3) async throws -> String {
@@ -40,11 +39,11 @@ import MobileCoreServices
             // For POST uploads
             let boundary = UUID().uuidString
             request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
-            
+
             let parameters = options["parameters"] as? [String: String] ?? [:]
-            
+
             let dataBody = createDataBody(withParameters: parameters, filePath: filePath, mimeType: mimeType, boundary: boundary)
-            
+
             task = self.getUrlSession().uploadTask(with: request, from: dataBody)
         }
 
@@ -101,7 +100,7 @@ import MobileCoreServices
                 task.resume()
                 return
             }
-            
+
             payload["error"] = error.localizedDescription
             sendEvent(name: "failed", id: id, payload: payload)
         } else {
@@ -134,20 +133,20 @@ import MobileCoreServices
 
     private func createDataBody(withParameters params: [String: String], filePath: String, mimeType: String, boundary: String) -> Data {
         let data = NSMutableData()
-        
+
         for (key, value) in params {
             data.append("--\(boundary)\r\n".data(using: .utf8)!)
             data.append("Content-Disposition: form-data; name=\"\(key)\"\r\n\r\n".data(using: .utf8)!)
             data.append("\(value)\r\n".data(using: .utf8)!)
         }
-        
+
         data.append("--\(boundary)\r\n".data(using: .utf8)!)
         data.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(URL(fileURLWithPath: filePath).lastPathComponent)\"\r\n".data(using: .utf8)!)
         data.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
         data.append(try! Data(contentsOf: URL(fileURLWithPath: filePath)))
         data.append("\r\n".data(using: .utf8)!)
         data.append("--\(boundary)--".data(using: .utf8)!)
-        
+
         return data as Data
     }
 

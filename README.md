@@ -138,14 +138,14 @@ uploadToCustomServer(filePath, serverUrl);
 ### startUpload(...)
 
 ```typescript
-startUpload(options: uploadOption) => any
+startUpload(options: uploadOption) => Promise<{ id: string; }>
 ```
 
 | Param         | Type                                                  | Description                              |
 | ------------- | ----------------------------------------------------- | ---------------------------------------- |
 | **`options`** | <code><a href="#uploadoption">uploadOption</a></code> | <a href="#uploadoption">uploadOption</a> |
 
-**Returns:** <code>any</code>
+**Returns:** <code>Promise&lt;{ id: string; }&gt;</code>
 
 **Since:** 1.0.0
 
@@ -155,14 +155,12 @@ startUpload(options: uploadOption) => any
 ### removeUpload(...)
 
 ```typescript
-removeUpload(options: { id: string; }) => any
+removeUpload(options: { id: string; }) => Promise<void>
 ```
 
 | Param         | Type                         |
 | ------------- | ---------------------------- |
 | **`options`** | <code>{ id: string; }</code> |
-
-**Returns:** <code>any</code>
 
 **Since:** 1.0.0
 
@@ -172,7 +170,7 @@ removeUpload(options: { id: string; }) => any
 ### addListener('events', ...)
 
 ```typescript
-addListener(eventName: 'events', listenerFunc: (state: UploadEvent) => void) => any
+addListener(eventName: "events", listenerFunc: (state: UploadEvent) => void) => Promise<PluginListenerHandle>
 ```
 
 | Param              | Type                                                                    |
@@ -180,7 +178,7 @@ addListener(eventName: 'events', listenerFunc: (state: UploadEvent) => void) => 
 | **`eventName`**    | <code>'events'</code>                                                   |
 | **`listenerFunc`** | <code>(state: <a href="#uploadevent">UploadEvent</a>) =&gt; void</code> |
 
-**Returns:** <code>any</code>
+**Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
 
 **Since:** 1.0.0
 
@@ -204,6 +202,13 @@ addListener(eventName: 'events', listenerFunc: (state: UploadEvent) => void) => 
 | **`maxRetries`**        | <code>number</code>                     |                          | 1.0.0 |
 
 
+#### PluginListenerHandle
+
+| Prop         | Type                                      |
+| ------------ | ----------------------------------------- |
+| **`remove`** | <code>() =&gt; Promise&lt;void&gt;</code> |
+
+
 #### UploadEvent
 
 | Prop          | Type                                                                    | Description                                  | Default                                               | Since |
@@ -211,13 +216,6 @@ addListener(eventName: 'events', listenerFunc: (state: UploadEvent) => void) => 
 | **`name`**    | <code>'uploading' \| 'completed' \| 'failed'</code>                     | Current status of upload, between 0 and 100. |                                                       | 1.0.0 |
 | **`payload`** | <code>{ percent?: number; error?: string; statusCode?: number; }</code> |                                              | <code>{ percent: 0, error: '', statusCode: 0 }</code> | 1.0.0 |
 | **`id`**      | <code>string</code>                                                     |                                              |                                                       | 1.0.0 |
-
-
-#### PluginListenerHandle
-
-| Prop         | Type                      |
-| ------------ | ------------------------- |
-| **`remove`** | <code>() =&gt; any</code> |
 
 </docgen-api>
 
