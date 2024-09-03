@@ -51,15 +51,29 @@ export interface UploadEvent {
   /**
    * Current status of upload, between 0 and 100.
    *
+   * @since 1.0.0
    */
   name: 'uploading' | 'completed' | 'failed';
   /**
    * @since 1.0.0
    * @description The payload of the event
+   * @default { percent: 0, error: '', statusCode: 0 }
    */
   payload: {
+    /**
+     * @since 1.0.0
+     * @description The percent of the upload
+     */
     percent?: number;
+    /**
+     * @since 1.0.0
+     * @description The error of the upload
+     */
     error?: string;
+    /**
+     * @since 1.0.0
+     * @description The status code of the upload
+     */
     statusCode?: number;
   };
   /**
@@ -73,16 +87,23 @@ export interface UploaderPlugin {
   /**
    * @since 1.0.0
    * @description Start the upload
+   * @param options uploadOption
+   * @returns { id: string }
    */
   startUpload(options: uploadOption): Promise<{ id: string }>;
   /**
    * @since 1.0.0
    * @description Remove the upload
+   * @param options
+   * @returns { void }
    */
   removeUpload(options: { id: string }): Promise<void>;
   /**
    * @since 1.0.0
    * @description Add a listener for the upload events
+   * @param eventName
+   * @param listenerFunc
+   * @returns { PluginListenerHandle }
    */
   addListener(
     eventName: 'events',

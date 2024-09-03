@@ -27,7 +27,24 @@
   "keywords": [
     "capacitor",
     "plugin",
-    "native"
+    "native",
+    "uploader",
+    "s3",
+    "upload",
+    "file",
+    "upload",
+    "upload-file",
+    "upload-files",
+    "upload-file-to-s3",
+    "upload-files-to-s3",
+    "capgo",
+    "capacitor-uploader",
+    "background",
+    "background-upload",
+    "background-upload-file",
+    "background-upload-files",
+    "background-upload-file-to-s3",
+    "background-upload-files-to-s3"
   ],
   "scripts": {
     "verify": "npm run verify:ios && npm run verify:android && npm run verify:web",

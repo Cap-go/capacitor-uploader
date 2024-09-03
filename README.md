@@ -8,7 +8,7 @@
 
 This plugin provides a flexible way to upload natively files to various servers, including S3 with presigned URLs.
 
-WIP: this is a work in progress still not ready for use
+Can be used in combination with the [Capacitor Camera preview](https://github.com/Cap-go/camera-preview) To upload file in reliable manner instead of reading them in buffer of webview and then upload in JS.
 
 ## Install
 
@@ -138,14 +138,16 @@ uploadToCustomServer(filePath, serverUrl);
 ### startUpload(...)
 
 ```typescript
-startUpload(options: uploadOption) => Promise<{ id: string; }>
+startUpload(options: uploadOption) => any
 ```
 
-| Param         | Type                                                  |
-| ------------- | ----------------------------------------------------- |
-| **`options`** | <code><a href="#uploadoption">uploadOption</a></code> |
+| Param         | Type                                                  | Description                              |
+| ------------- | ----------------------------------------------------- | ---------------------------------------- |
+| **`options`** | <code><a href="#uploadoption">uploadOption</a></code> | <a href="#uploadoption">uploadOption</a> |
 
-**Returns:** <code>Promise&lt;{ id: string; }&gt;</code>
+**Returns:** <code>any</code>
+
+**Since:** 1.0.0
 
 --------------------
 
@@ -153,12 +155,16 @@ startUpload(options: uploadOption) => Promise<{ id: string; }>
 ### removeUpload(...)
 
 ```typescript
-removeUpload(options: { id: string; }) => Promise<void>
+removeUpload(options: { id: string; }) => any
 ```
 
 | Param         | Type                         |
 | ------------- | ---------------------------- |
 | **`options`** | <code>{ id: string; }</code> |
+
+**Returns:** <code>any</code>
+
+**Since:** 1.0.0
 
 --------------------
 
@@ -166,7 +172,7 @@ removeUpload(options: { id: string; }) => Promise<void>
 ### addListener('events', ...)
 
 ```typescript
-addListener(eventName: "events", listenerFunc: (state: UploadEvent) => void) => Promise<PluginListenerHandle>
+addListener(eventName: 'events', listenerFunc: (state: UploadEvent) => void) => any
 ```
 
 | Param              | Type                                                                    |
@@ -174,7 +180,9 @@ addListener(eventName: "events", listenerFunc: (state: UploadEvent) => void) => 
 | **`eventName`**    | <code>'events'</code>                                                   |
 | **`listenerFunc`** | <code>(state: <a href="#uploadevent">UploadEvent</a>) =&gt; void</code> |
 
-**Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
+**Returns:** <code>any</code>
+
+**Since:** 1.0.0
 
 --------------------
 
@@ -193,22 +201,23 @@ addListener(eventName: "events", listenerFunc: (state: UploadEvent) => void) => 
 | **`method`**            | <code>'PUT' \| 'POST'</code>            | <code>'POST'</code>      | 1.0.0 |
 | **`mimeType`**          | <code>string</code>                     |                          | 1.0.0 |
 | **`parameters`**        | <code>{ [key: string]: string; }</code> |                          | 1.0.0 |
-| **`maxRetries`**        | <code>number or upload retry</code>     |                          | 1.0.0 |
-
-#### PluginListenerHandle
-
-| Prop         | Type                                      |
-| ------------ | ----------------------------------------- |
-| **`remove`** | <code>() =&gt; Promise&lt;void&gt;</code> |
+| **`maxRetries`**        | <code>number</code>                     |                          | 1.0.0 |
 
 
 #### UploadEvent
 
-| Prop          | Type                                                                    | Description                                  |
-| ------------- | ----------------------------------------------------------------------- | -------------------------------------------- |
-| **`name`**    | <code>'uploading' \| 'completed' \| 'failed'</code>                     | Current status of upload, between 0 and 100. |
-| **`payload`** | <code>{ percent?: number; error?: string; statusCode?: number; }</code> |                                              |
-| **`id`**      | <code>string</code>                                                     |                                              |
+| Prop          | Type                                                                    | Description                                  | Default                                               | Since |
+| ------------- | ----------------------------------------------------------------------- | -------------------------------------------- | ----------------------------------------------------- | ----- |
+| **`name`**    | <code>'uploading' \| 'completed' \| 'failed'</code>                     | Current status of upload, between 0 and 100. |                                                       | 1.0.0 |
+| **`payload`** | <code>{ percent?: number; error?: string; statusCode?: number; }</code> |                                              | <code>{ percent: 0, error: '', statusCode: 0 }</code> | 1.0.0 |
+| **`id`**      | <code>string</code>                                                     |                                              |                                                       | 1.0.0 |
+
+
+#### PluginListenerHandle
+
+| Prop         | Type                      |
+| ------------ | ------------------------- |
+| **`remove`** | <code>() =&gt; any</code> |
 
 </docgen-api>
 
