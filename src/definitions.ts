@@ -35,6 +35,7 @@ export interface UploadEvent {
   payload: {
     percent?: number;
     error?: string; 
+    statusCode?: number;
   }
   id: string;
 }
