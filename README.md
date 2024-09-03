@@ -108,3 +108,9 @@ addListener(eventName: "events", listenerFunc: (state: UploadEvent) => void) => 
 | **`id`**      | <code>string</code>                                                     |                                              |
 
 </docgen-api>
+
+### Credits:
+
+For the inspiration and the code on ios: https://github.com/Vydia/react-native-background-upload/tree/master
+For the API definition: https://www.npmjs.com/package/cordova-plugin-background-upload-put-s3
+
