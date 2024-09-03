@@ -2,33 +2,27 @@ import Foundation
 import Capacitor
 
 @objc(UploaderPlugin)
-public class UploaderPlugin: CAPPlugin, CAPBridgedPlugin {
-    public let identifier = "UploaderPlugin"
-    public let jsName = "Uploader"
-    public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "startUpload", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "removeUpload", returnType: CAPPluginReturnPromise),
-    ]
+public class UploaderPlugin: CAPPlugin {
     private let implementation = Uploader()
 
     override public func load() {
-        NotificationCenter.default.addObserver(self, selector: #selector(handleProgress(_:)), name: Notification.Name("UploaderPlugin-progress"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleCompleted(_:)), name: Notification.Name("UploaderPlugin-completed"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleError(_:)), name: Notification.Name("UploaderPlugin-error"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleCancelled(_:)), name: Notification.Name("UploaderPlugin-cancelled"), object: nil)
+        implementation.eventHandler = { [weak self] event in
+            self?.notifyListeners("events", data: event)
+        }
     }
 
     @objc func startUpload(_ call: CAPPluginCall) {
-        let filePath = call.getString("filePath") ?? ""
-        let serverUrl = call.getString("serverUrl") ?? ""
+        guard let filePath = call.getString("filePath"),
+              let serverUrl = call.getString("serverUrl") else {
+            call.reject("Missing required parameters")
+            return
+        }
         let headers = call.getObject("headers") as? [String: String] ?? [:]
         
         Task {
             do {
                 let id = try await implementation.startUpload(filePath, serverUrl, headers)
-                call.resolve([
-                    "id": id
-                ])
+                call.resolve(["id": id])
             } catch {
                 call.reject("Failed to start upload: \(error.localizedDescription)")
             }
@@ -36,7 +30,10 @@ public class UploaderPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     @objc func removeUpload(_ call: CAPPluginCall) {
-        let id = call.getString("id") ?? ""
+        guard let id = call.getString("id") else {
+            call.reject("Missing required parameter: id")
+            return
+        }
         
         Task {
             do {
@@ -46,25 +43,5 @@ public class UploaderPlugin: CAPPlugin, CAPBridgedPlugin {
                 call.reject("Failed to remove upload: \(error.localizedDescription)")
             }
         }
-    }
-
-    @objc private func handleProgress(_ notification: Notification) {
-        guard let data = notification.userInfo as? [String: Any] else { return }
-        notifyListeners("progress", data: data)
-    }
-
-    @objc private func handleCompleted(_ notification: Notification) {
-        guard let data = notification.userInfo as? [String: Any] else { return }
-        notifyListeners("completed", data: data)
-    }
-
-    @objc private func handleError(_ notification: Notification) {
-        guard let data = notification.userInfo as? [String: Any] else { return }
-        notifyListeners("error", data: data)
-    }
-
-    @objc private func handleCancelled(_ notification: Notification) {
-        guard let data = notification.userInfo as? [String: Any] else { return }
-        notifyListeners("cancelled", data: data)
     }
 }

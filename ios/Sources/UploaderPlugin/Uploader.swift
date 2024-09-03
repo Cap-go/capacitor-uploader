@@ -5,6 +5,8 @@ import Capacitor
     private var urlSession: URLSession?
     private var responsesData: [Int: Data] = [:]
     private var tasks: [String: URLSessionTask] = [:]
+    
+    var eventHandler: (([String: Any]) -> Void)?
 
     @objc public func startUpload(_ filePath: String, _ serverUrl: String, _ headers: [String: String]) async throws -> String {
         let id = UUID().uuidString
@@ -51,27 +53,16 @@ import Capacitor
     public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         guard let id = task.taskDescription else { return }
 
-        var data: [String: Any] = ["id": id]
+        var payload: [String: Any] = [:]
         if let response = task.response as? HTTPURLResponse {
-            data["responseCode"] = response.statusCode
-        }
-
-        if let responseData = responsesData[task.taskIdentifier] {
-            data["responseBody"] = String(data: responseData, encoding: .utf8) ?? ""
-            responsesData.removeValue(forKey: task.taskIdentifier)
-        } else {
-            data["responseBody"] = NSNull()
+            payload["statusCode"] = response.statusCode
         }
 
         if let error = error {
-            data["error"] = error.localizedDescription
-            if (error as NSError).code == NSURLErrorCancelled {
-                NotificationCenter.default.post(name: Notification.Name("UploaderPlugin-cancelled"), object: nil, userInfo: data)
-            } else {
-                NotificationCenter.default.post(name: Notification.Name("UploaderPlugin-error"), object: nil, userInfo: data)
-            }
+            payload["error"] = error.localizedDescription
+            sendEvent(name: "failed", id: id, payload: payload)
         } else {
-            NotificationCenter.default.post(name: Notification.Name("UploaderPlugin-completed"), object: nil, userInfo: data)
+            sendEvent(name: "completed", id: id, payload: payload)
         }
 
         tasks.removeValue(forKey: id)
@@ -80,17 +71,21 @@ import Capacitor
     public func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64, totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
         guard let id = task.taskDescription else { return }
 
-        var progress: Float = -1
+        var percent: Float = -1
         if totalBytesExpectedToSend > 0 {
-            progress = Float(totalBytesSent) / Float(totalBytesExpectedToSend) * 100
+            percent = Float(totalBytesSent) / Float(totalBytesExpectedToSend) * 100
         }
 
-        let data: [String: Any] = [
-            "id": id,
-            "progress": progress
-        ]
+        sendEvent(name: "uploading", id: id, payload: ["percent": percent])
+    }
 
-        NotificationCenter.default.post(name: Notification.Name("UploaderPlugin-progress"), object: nil, userInfo: data)
+    private func sendEvent(name: String, id: String, payload: [String: Any]) {
+        var event: [String: Any] = [
+            "name": name,
+            "id": id,
+            "payload": payload
+        ]
+        eventHandler?(event)
     }
 }
 
