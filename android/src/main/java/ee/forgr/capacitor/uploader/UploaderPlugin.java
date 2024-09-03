@@ -72,12 +72,18 @@ public class UploaderPlugin extends Plugin {
     public void startUpload(PluginCall call) {
         String filePath = call.getString("filePath");
         String serverUrl = call.getString("serverUrl");
-        JSObject headersObj = call.getObject("headers");
-        Map<String, String> headers = JSObjectToMap(headersObj);
+        JSObject headersObj = call.getObject("headers", new JSObject());
+        JSObject parametersObj = call.getObject("parameters", new JSObject());
+        String httpMethod = call.getString("method", "POST");
         String notificationTitle = call.getString("notificationTitle", "File Upload");
+        int maxRetries = call.getInt("maxRetries", 2);
+        String mimeType = call.getString("mimeType"); // Add this line
+
+        Map<String, String> headers = JSObjectToMap(headersObj);
+        Map<String, String> parameters = JSObjectToMap(parametersObj);
 
         try {
-            String id = implementation.startUpload(filePath, serverUrl, headers, notificationTitle);
+            String id = implementation.startUpload(filePath, serverUrl, headers, parameters, httpMethod, notificationTitle, maxRetries, mimeType);
             JSObject result = new JSObject();
             result.put("id", id);
             call.resolve(result);

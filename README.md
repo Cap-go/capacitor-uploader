@@ -1,6 +1,12 @@
 # @capgo/capacitor-uploader
+  <a href="https://capgo.app/"><img src='https://raw.githubusercontent.com/Cap-go/capgo/main/assets/capgo_banner.png' alt='Capgo - Instant updates for capacitor'/></a>
+  <div align="center">
+<h2><a href="https://capgo.app/">Check out: Capgo — Instant updates for capacitor</a></h2>
+</div>
 
-Upload file natively
+## Uploader Plugin
+
+This plugin provides a flexible way to upload natively files to various servers, including S3 with presigned URLs.
 
 WIP: this is a work in progress still not ready for use
 
@@ -19,6 +25,100 @@ Add the following to your `AndroidManifest.xml` file:
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+```
+
+## Exemple S3 upload:
+
+
+## Example S3 upload:
+
+```typescript
+import { Uploader } from '@capgo/capacitor-uploader';
+
+async function uploadToS3(filePath: string, presignedUrl: string, fields: Record<string, string>) {
+  try {
+    const { id } = await Uploader.startUpload({
+      filePath: filePath,
+      serverUrl: presignedUrl,
+      method: 'PUT',
+      parameters: fields,
+      notificationTitle: 'Uploading to S3'
+    });
+
+    console.log('Upload started with ID:', id);
+
+    // Listen for upload events
+    Uploader.addListener('events', (event: UploadEvent) => {
+      if (event.name === 'uploading') {
+        console.log(`Upload progress: ${event.payload.percent}%`);
+      } else if (event.name === 'completed') {
+        console.log('Upload completed successfully');
+      } else if (event.name === 'failed') {
+        console.error('Upload failed:', event.payload.error);
+      }
+    });
+
+  } catch (error) {
+    console.error('Failed to start upload:', error);
+  }
+}
+
+```
+
+### Exemple upload to a custom server:
+
+```typescript
+import { Uploader } from '@capgo/capacitor-uploader';
+
+async function uploadToCustomServer(filePath: string, serverUrl: string) {
+  try {
+    // Start the upload
+    const { id } = await Uploader.startUpload({
+      filePath: filePath,
+      serverUrl: serverUrl,
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer your-auth-token-here'
+      },
+      parameters: {
+        'user_id': '12345',
+        'file_type': 'image'
+      },
+      notificationTitle: 'Uploading to Custom Server',
+      maxRetries: 3
+    });
+
+    console.log('Upload started with ID:', id);
+
+    // Listen for upload events
+    Uploader.addListener('events', (event) => {
+      switch (event.name) {
+        case 'uploading':
+          console.log(`Upload progress: ${event.payload.percent}%`);
+          break;
+        case 'completed':
+          console.log('Upload completed successfully');
+          console.log('Server response status code:', event.payload.statusCode);
+          break;
+        case 'failed':
+          console.error('Upload failed:', event.payload.error);
+          break;
+      }
+    });
+
+    // Optional: Remove the upload if needed
+    // await Uploader.removeUpload({ id: id });
+
+  } catch (error) {
+    console.error('Failed to start upload:', error);
+  }
+}
+
+// Usage
+const filePath = 'file:///path/to/your/file.jpg';
+const serverUrl = 'https://your-custom-server.com/upload';
+uploadToCustomServer(filePath, serverUrl);
+
 ```
 
 ## API
@@ -90,7 +190,10 @@ addListener(eventName: "events", listenerFunc: (state: UploadEvent) => void) => 
 | **`serverUrl`**         | <code>string</code>                     |                          | 1.0.0 |
 | **`notificationTitle`** | <code>number</code>                     | <code>'Uploading'</code> | 1.0.0 |
 | **`headers`**           | <code>{ [key: string]: string; }</code> |                          | 1.0.0 |
-
+| **`method`**            | <code>'PUT' \| 'POST'</code>            | <code>'POST'</code>      | 1.0.0 |
+| **`mimeType`**          | <code>string</code>                     |                          | 1.0.0 |
+| **`parameters`**        | <code>{ [key: string]: string; }</code> |                          | 1.0.0 |
+| **`maxRetries`**        | <code>number or upload retry</code>     |                          | 1.0.0 |
 
 #### PluginListenerHandle
 

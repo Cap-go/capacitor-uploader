@@ -44,33 +44,25 @@ public class Uploader {
         }
     }
 
-    public String startUpload(String filePath, String serverUrl, Map<String, String> headers, String notificationTitle) throws Exception {
-        UploadNotificationStatusConfig progress = new UploadNotificationStatusConfig(notificationTitle, notificationTitle + " - In Progress");
-        UploadNotificationStatusConfig success = new UploadNotificationStatusConfig(notificationTitle, notificationTitle + " - Completed");
-        UploadNotificationStatusConfig error = new UploadNotificationStatusConfig(notificationTitle, notificationTitle + " - Error");
-        UploadNotificationStatusConfig cancelled = new UploadNotificationStatusConfig(notificationTitle, notificationTitle + " - Cancelled");
-
-        UploadNotificationConfig notificationConfig = new UploadNotificationConfig(
-            "ee.forgr.capacitor.uploader.notification_channel_id",
-            false,
-            progress,
-            success,
-            error,
-            cancelled
-        );
+    public String startUpload(String filePath, String serverUrl, Map<String, String> headers, Map<String, String> parameters, 
+                            String httpMethod, String notificationTitle, int maxRetries, String mimeType) throws Exception {
+        UploadNotificationConfig notificationConfig = createNotificationConfig(notificationTitle);
 
         MultipartUploadRequest request = new MultipartUploadRequest(context, serverUrl)
-            .setMethod("POST")
-            .addFileToUpload(filePath, "file")
-            .setNotificationConfig((ctx, uploadId) -> notificationConfig);
+            .setMethod(httpMethod)
+            .addFileToUpload(filePath, "file", mimeType) // Updated this line
+            .setNotificationConfig((ctx, uploadId) -> notificationConfig)
+            .setMaxRetries(maxRetries);
 
         // Add headers
         for (Map.Entry<String, String> entry : headers.entrySet()) {
             request.addHeader(entry.getKey(), entry.getValue());
         }
 
-        // Set max retries
-        request.setMaxRetries(2);
+        // Add parameters
+        for (Map.Entry<String, String> entry : parameters.entrySet()) {
+            request.addParameter(entry.getKey(), entry.getValue());
+        }
 
         // Set file name if it's a content URI
         if (filePath.startsWith("content://")) {
@@ -87,6 +79,22 @@ public class Uploader {
 
     public void removeUpload(String uploadId) {
         net.gotev.uploadservice.UploadService.stopUpload(uploadId);
+    }
+
+    private UploadNotificationConfig createNotificationConfig(String notificationTitle) {
+        UploadNotificationStatusConfig progress = new UploadNotificationStatusConfig(notificationTitle, notificationTitle + " - In Progress");
+        UploadNotificationStatusConfig success = new UploadNotificationStatusConfig(notificationTitle, notificationTitle + " - Completed");
+        UploadNotificationStatusConfig error = new UploadNotificationStatusConfig(notificationTitle, notificationTitle + " - Error");
+        UploadNotificationStatusConfig cancelled = new UploadNotificationStatusConfig(notificationTitle, notificationTitle + " - Cancelled");
+
+        return new UploadNotificationConfig(
+            "ee.forgr.capacitor.uploader.notification_channel_id",
+            false,
+            progress,
+            success,
+            error,
+            cancelled
+        );
     }
 
     private String getFileNameFromUri(Uri uri) {

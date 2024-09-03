@@ -1,14 +1,18 @@
 import Foundation
 import Capacitor
+import UniformTypeIdentifiers
+import MobileCoreServices
+
 
 @objc public class Uploader: NSObject, URLSessionTaskDelegate {
     private var urlSession: URLSession?
     private var responsesData: [Int: Data] = [:]
     private var tasks: [String: URLSessionTask] = [:]
+    private var retries: [String: Int] = [:]
     
     var eventHandler: (([String: Any]) -> Void)?
 
-    @objc public func startUpload(_ filePath: String, _ serverUrl: String, _ headers: [String: String]) async throws -> String {
+    @objc public func startUpload(_ filePath: String, _ serverUrl: String, _ options: [String: Any], maxRetries: Int = 3) async throws -> String {
         let id = UUID().uuidString
         print("startUpload: \(id)")
 
@@ -17,16 +21,36 @@ import Capacitor
         }
 
         var request = URLRequest(url: url)
-        request.httpMethod = "POST"
+        request.httpMethod = (options["method"] as? String)?.uppercased() ?? "POST"
 
+        let headers = options["headers"] as? [String: String] ?? [:]
         for (key, value) in headers {
             request.setValue(value, forHTTPHeaderField: key)
         }
 
         let fileUrl = URL(fileURLWithPath: filePath)
-        let task = self.getUrlSession().uploadTask(with: request, fromFile: fileUrl)
+        let mimeType = options["mimeType"] as? String ?? guessMIMEType(from: filePath)
+
+        let task: URLSessionTask
+        if request.httpMethod == "PUT" {
+            // For S3 presigned URL uploads
+            request.setValue(mimeType, forHTTPHeaderField: "Content-Type")
+            task = self.getUrlSession().uploadTask(with: request, fromFile: fileUrl)
+        } else {
+            // For POST uploads
+            let boundary = UUID().uuidString
+            request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+            
+            let parameters = options["parameters"] as? [String: String] ?? [:]
+            
+            let dataBody = createDataBody(withParameters: parameters, filePath: filePath, mimeType: mimeType, boundary: boundary)
+            
+            task = self.getUrlSession().uploadTask(with: request, from: dataBody)
+        }
+
         task.taskDescription = id
         tasks[id] = task
+        retries[id] = maxRetries
         task.resume()
 
         return id
@@ -48,8 +72,20 @@ import Capacitor
         return urlSession!
     }
 
-    // MARK: - URLSessionTaskDelegate
-
+    private func guessMIMEType(from filePath: String) -> String {
+        let url = URL(fileURLWithPath: filePath)
+        if #available(iOS 14.0, *) {
+            if let mimeType = UTType(filenameExtension: url.pathExtension)?.preferredMIMEType {
+                return mimeType
+            }
+        } else {
+            if let uti = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, url.pathExtension as CFString, nil)?.takeRetainedValue(),
+               let mimeType = UTTypeCopyPreferredTagWithClass(uti, kUTTagClassMIMEType)?.takeRetainedValue() as String? {
+                return mimeType
+            }
+        }
+        return "application/octet-stream"
+    }
     public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         guard let id = task.taskDescription else { return }
 
@@ -59,6 +95,13 @@ import Capacitor
         }
 
         if let error = error {
+            if let retriesLeft = retries[id], retriesLeft > 0 {
+                retries[id] = retriesLeft - 1
+                print("Retrying upload (retries left: \(retriesLeft - 1))")
+                task.resume()
+                return
+            }
+            
             payload["error"] = error.localizedDescription
             sendEvent(name: "failed", id: id, payload: payload)
         } else {
@@ -66,6 +109,7 @@ import Capacitor
         }
 
         tasks.removeValue(forKey: id)
+        retries.removeValue(forKey: id)
     }
 
     public func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64, totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
@@ -87,9 +131,28 @@ import Capacitor
         ]
         eventHandler?(event)
     }
+
+    private func createDataBody(withParameters params: [String: String], filePath: String, mimeType: String, boundary: String) -> Data {
+        let data = NSMutableData()
+        
+        for (key, value) in params {
+            data.append("--\(boundary)\r\n".data(using: .utf8)!)
+            data.append("Content-Disposition: form-data; name=\"\(key)\"\r\n\r\n".data(using: .utf8)!)
+            data.append("\(value)\r\n".data(using: .utf8)!)
+        }
+        
+        data.append("--\(boundary)\r\n".data(using: .utf8)!)
+        data.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(URL(fileURLWithPath: filePath).lastPathComponent)\"\r\n".data(using: .utf8)!)
+        data.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
+        data.append(try! Data(contentsOf: URL(fileURLWithPath: filePath)))
+        data.append("\r\n".data(using: .utf8)!)
+        data.append("--\(boundary)--".data(using: .utf8)!)
+        
+        return data as Data
+    }
+
 }
 
-// MARK: - URLSessionDataDelegate
 extension Uploader: URLSessionDataDelegate {
     public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
         var responseData = responsesData[dataTask.taskIdentifier] ?? Data()
