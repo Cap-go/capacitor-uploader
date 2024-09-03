@@ -25,28 +25,35 @@ public class UploaderPlugin extends Plugin {
         implementation = new Uploader(getContext(), new RequestObserverDelegate() {
             @Override
             public void onProgress(Context context, UploadInfo uploadInfo) {
-                JSObject progress = new JSObject();
-                progress.put("id", uploadInfo.getUploadId());
-                progress.put("progress", uploadInfo.getProgressPercent());
-                notifyListeners("progress", progress);
+                JSObject event = new JSObject();
+                event.put("name", "uploading");
+                JSObject payload = new JSObject();
+                payload.put("percent", uploadInfo.getProgressPercent());
+                event.put("payload", payload);
+                event.put("id", uploadInfo.getUploadId());
+                notifyListeners("events", event);
             }
 
             @Override
             public void onSuccess(Context context, UploadInfo uploadInfo, ServerResponse serverResponse) {
-                JSObject result = new JSObject();
-                result.put("id", uploadInfo.getUploadId());
-                result.put("responseCode", serverResponse.getCode());
-                result.put("responseBody", serverResponse.getBodyString());
-                notifyListeners("completed", result);
+                JSObject event = new JSObject();
+                event.put("name", "completed");
+                JSObject payload = new JSObject();
+                payload.put("statusCode", serverResponse.getCode());
+                event.put("payload", payload);
+                event.put("id", uploadInfo.getUploadId());
+                notifyListeners("events", event);
             }
-
 
             @Override
             public void onError(Context context, UploadInfo uploadInfo, Throwable exception) {
-                JSObject error = new JSObject();
-                error.put("id", uploadInfo.getUploadId());
-                error.put("error", exception.getMessage());
-                notifyListeners("error", error);
+                JSObject event = new JSObject();
+                event.put("name", "failed");
+                JSObject payload = new JSObject();
+                payload.put("error", exception.getMessage());
+                event.put("payload", payload);
+                event.put("id", uploadInfo.getUploadId());
+                notifyListeners("events", event);
             }
 
             @Override
