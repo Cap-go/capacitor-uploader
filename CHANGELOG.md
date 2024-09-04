@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.6](https://github.com/Cap-go/capacitor-uploader/compare/0.0.5...0.0.6) (2024-09-04)
+
+
+### Bug Fixes
+
+* add missing pluginMethods ([6189aaa](https://github.com/Cap-go/capacitor-uploader/commit/6189aaa242788d6b817df6c12c875a211f075541))
+
 ### [0.0.5](https://github.com/Cap-go/capacitor-uploader/compare/0.0.4...0.0.5) (2024-09-04)
 
 
