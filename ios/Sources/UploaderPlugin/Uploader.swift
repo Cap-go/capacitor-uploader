@@ -27,7 +27,9 @@ import MobileCoreServices
             request.setValue(value, forHTTPHeaderField: key)
         }
 
-        let fileUrl = URL(fileURLWithPath: filePath)
+        guard let fileUrl = URL(string: filePath) else {
+            throw NSError(domain: "UploaderPlugin", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid file URL"])
+        }
         let mimeType = options["mimeType"] as? String ?? guessMIMEType(from: filePath)
 
         let task: URLSessionTask
