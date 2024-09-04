@@ -147,7 +147,7 @@ startUpload(options: uploadOption) => Promise<{ id: string; }>
 
 **Returns:** <code>Promise&lt;{ id: string; }&gt;</code>
 
-**Since:** 1.0.0
+**Since:** 0.0.1
 
 --------------------
 
@@ -162,7 +162,7 @@ removeUpload(options: { id: string; }) => Promise<void>
 | ------------- | ---------------------------- |
 | **`options`** | <code>{ id: string; }</code> |
 
-**Since:** 1.0.0
+**Since:** 0.0.1
 
 --------------------
 
@@ -180,7 +180,7 @@ addListener(eventName: "events", listenerFunc: (state: UploadEvent) => void) => 
 
 **Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
 
-**Since:** 1.0.0
+**Since:** 0.0.1
 
 --------------------
 
@@ -192,14 +192,14 @@ addListener(eventName: "events", listenerFunc: (state: UploadEvent) => void) => 
 
 | Prop                    | Type                                    | Default                  | Since |
 | ----------------------- | --------------------------------------- | ------------------------ | ----- |
-| **`filePath`**          | <code>string</code>                     |                          | 1.0.0 |
-| **`serverUrl`**         | <code>string</code>                     |                          | 1.0.0 |
-| **`notificationTitle`** | <code>number</code>                     | <code>'Uploading'</code> | 1.0.0 |
-| **`headers`**           | <code>{ [key: string]: string; }</code> |                          | 1.0.0 |
-| **`method`**            | <code>'PUT' \| 'POST'</code>            | <code>'POST'</code>      | 1.0.0 |
-| **`mimeType`**          | <code>string</code>                     |                          | 1.0.0 |
-| **`parameters`**        | <code>{ [key: string]: string; }</code> |                          | 1.0.0 |
-| **`maxRetries`**        | <code>number</code>                     |                          | 1.0.0 |
+| **`filePath`**          | <code>string</code>                     |                          | 0.0.1 |
+| **`serverUrl`**         | <code>string</code>                     |                          | 0.0.1 |
+| **`notificationTitle`** | <code>number</code>                     | <code>'Uploading'</code> | 0.0.1 |
+| **`headers`**           | <code>{ [key: string]: string; }</code> |                          | 0.0.1 |
+| **`method`**            | <code>'PUT' \| 'POST'</code>            | <code>'POST'</code>      | 0.0.1 |
+| **`mimeType`**          | <code>string</code>                     |                          | 0.0.1 |
+| **`parameters`**        | <code>{ [key: string]: string; }</code> |                          | 0.0.1 |
+| **`maxRetries`**        | <code>number</code>                     |                          | 0.0.1 |
 
 
 #### PluginListenerHandle
@@ -213,9 +213,9 @@ addListener(eventName: "events", listenerFunc: (state: UploadEvent) => void) => 
 
 | Prop          | Type                                                                    | Description                                  | Default                                               | Since |
 | ------------- | ----------------------------------------------------------------------- | -------------------------------------------- | ----------------------------------------------------- | ----- |
-| **`name`**    | <code>'uploading' \| 'completed' \| 'failed'</code>                     | Current status of upload, between 0 and 100. |                                                       | 1.0.0 |
-| **`payload`** | <code>{ percent?: number; error?: string; statusCode?: number; }</code> |                                              | <code>{ percent: 0, error: '', statusCode: 0 }</code> | 1.0.0 |
-| **`id`**      | <code>string</code>                                                     |                                              |                                                       | 1.0.0 |
+| **`name`**    | <code>'uploading' \| 'completed' \| 'failed'</code>                     | Current status of upload, between 0 and 100. |                                                       | 0.0.1 |
+| **`payload`** | <code>{ percent?: number; error?: string; statusCode?: number; }</code> |                                              | <code>{ percent: 0, error: '', statusCode: 0 }</code> | 0.0.1 |
+| **`id`**      | <code>string</code>                                                     |                                              |                                                       | 0.0.1 |
 
 </docgen-api>
 
