@@ -4,6 +4,10 @@ import Capacitor
 @objc(UploaderPlugin)
 public class UploaderPlugin: CAPPlugin {
     private let implementation = Uploader()
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "startUpload", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "removeUpload", returnType: CAPPluginReturnPromise),
+    ]
 
     override public func load() {
         implementation.eventHandler = { [weak self] event in
