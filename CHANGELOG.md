@@ -1,0 +1,25 @@
+# Changelog
+
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+### 0.0.2 (2024-09-04)
+
+
+### Features
+
+* add definition ([3d123de](https://github.com/Cap-go/capacitor-uploader/commit/3d123defe76f3b92275f4e2ce5ae3aa38856bb71))
+* add github action ([3a9ed2b](https://github.com/Cap-go/capacitor-uploader/commit/3a9ed2bff620f77912fca0ca022141e2f74f1c87))
+* add sqeleton implementation ([0075a1d](https://github.com/Cap-go/capacitor-uploader/commit/0075a1dc0e315d0ad36e42dff5bbf690e2b53a16))
+* add web implementation ([98ff4ce](https://github.com/Cap-go/capacitor-uploader/commit/98ff4ce3717b8d77c161d25fd5dd6f7c2cf84cfe))
+
+
+### Bug Fixes
+
+* add status code ([a18f53d](https://github.com/Cap-go/capacitor-uploader/commit/a18f53d8e0cc75664047786d164731f24117210f))
+* better doc and add max retry ([c1a424c](https://github.com/Cap-go/capacitor-uploader/commit/c1a424c49aa1fc6b4c5f333cfb154f08beaf13fb))
+* definition ([384eb70](https://github.com/Cap-go/capacitor-uploader/commit/384eb703f4135cc64c930bce4aa47d492140ccd5))
+* definition and keywords ([9c92573](https://github.com/Cap-go/capacitor-uploader/commit/9c925731237a66f420d9cb4136e1bb8780be043a))
+* events Android ([5bb5da7](https://github.com/Cap-go/capacitor-uploader/commit/5bb5da7a01fef01e650b8fe5fc95de609ca4e6e8))
+* events IOS ([7479537](https://github.com/Cap-go/capacitor-uploader/commit/747953797b990442ec59894426baff64828c41c8))
+* lint ([39716fa](https://github.com/Cap-go/capacitor-uploader/commit/39716fa0732bfcf8c87bf0cbaae0520138488642))
+* test ci ([3452e49](https://github.com/Cap-go/capacitor-uploader/commit/3452e497ba16ea5ae48b6569ae63080e7f8d12d8))
