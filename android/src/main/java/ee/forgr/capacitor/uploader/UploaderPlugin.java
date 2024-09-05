@@ -1,6 +1,10 @@
 package ee.forgr.capacitor.uploader;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
+import android.os.Build;
+
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -18,8 +22,25 @@ public class UploaderPlugin extends Plugin {
 
   private Uploader implementation;
 
+  private static final String CHANNEL_ID = "ee.forgr.capacitor.uploader.notification_channel_id";
+  private static final String CHANNEL_NAME = "Uploader Notifications";
+  private static final String CHANNEL_DESCRIPTION = "Notifications for file uploads";
+
+  private void createNotificationChannel() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      NotificationManager notificationManager = (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+
+      NotificationChannel channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
+      channel.setDescription(CHANNEL_DESCRIPTION);
+
+      notificationManager.createNotificationChannel(channel);
+    }
+  }
+
+
   @Override
   public void load() {
+    createNotificationChannel();
     implementation = new Uploader(
       getContext(),
       new RequestObserverDelegate() {
