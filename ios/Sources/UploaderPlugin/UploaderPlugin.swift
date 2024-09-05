@@ -6,7 +6,7 @@ public class UploaderPlugin: CAPPlugin {
     private let implementation = Uploader()
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "startUpload", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "removeUpload", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "removeUpload", returnType: CAPPluginReturnPromise)
     ]
 
     override public func load() {

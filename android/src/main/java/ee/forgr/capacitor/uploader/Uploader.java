@@ -10,7 +10,7 @@ import net.gotev.uploadservice.UploadServiceConfig;
 import net.gotev.uploadservice.data.UploadNotificationConfig;
 import net.gotev.uploadservice.data.UploadNotificationStatusConfig;
 import net.gotev.uploadservice.observer.request.RequestObserverDelegate;
-import net.gotev.uploadservice.protocols.multipart.MultipartUploadRequest;
+import net.gotev.uploadservice.protocols.binary.BinaryUploadRequest;
 
 public class Uploader {
 
@@ -60,14 +60,14 @@ public class Uploader {
       notificationTitle
     );
 
-    MultipartUploadRequest request = new MultipartUploadRequest(
-      context,
-      serverUrl
-    )
+    BinaryUploadRequest request = new BinaryUploadRequest(context, serverUrl)
       .setMethod(httpMethod)
-      .addFileToUpload(filePath, "file", mimeType) // Updated this line
+      .setFileToUpload(filePath)
       .setNotificationConfig((ctx, uploadId) -> notificationConfig)
       .setMaxRetries(maxRetries);
+
+    // Set the Content-Type header for the file
+    request.addHeader("Content-Type", mimeType);
 
     // Add headers
     for (Map.Entry<String, String> entry : headers.entrySet()) {
