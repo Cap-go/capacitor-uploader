@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.8](https://github.com/Cap-go/capacitor-uploader/compare/0.0.7...0.0.8) (2024-09-05)
+
+
+### Bug Fixes
+
+* issue channel android ([934b799](https://github.com/Cap-go/capacitor-uploader/commit/934b7997cbd485954348ff6b9f4964ded07ac1d8))
+
 ### [0.0.7](https://github.com/Cap-go/capacitor-uploader/compare/0.0.6...0.0.7) (2024-09-04)
 
 
