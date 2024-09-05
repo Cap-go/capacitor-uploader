@@ -123,6 +123,8 @@ uploadToCustomServer(filePath, serverUrl);
 
 ### Exemple with Capacitor Camera preview:
 
+Documentation for the [Capacitor Camera preview](https://github.com/Cap-go/camera-preview)
+
 ```typescript
   import { CameraPreview } from '@capgo/camera-preview'
   import { Uploader } from '@capgo/capacitor-uploader';
