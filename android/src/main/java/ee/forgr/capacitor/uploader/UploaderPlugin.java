@@ -4,6 +4,8 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.os.Build;
+import android.webkit.MimeTypeMap;
+
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -104,6 +106,15 @@ public class UploaderPlugin extends Plugin {
     );
   }
 
+  public static String getMimeType(String url) {
+    String type = null;
+    String extension = MimeTypeMap.getFileExtensionFromUrl(url);
+    if (extension != null) {
+      type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+    }
+    return type;
+  }
+
   @PluginMethod
   public void startUpload(PluginCall call) {
     String filePath = call.getString("filePath");
@@ -116,12 +127,13 @@ public class UploaderPlugin extends Plugin {
       "File Upload"
     );
     int maxRetries = call.getInt("maxRetries", 2);
-    String mimeType = call.getString("mimeType"); // Add this line
 
     Map<String, String> headers = JSObjectToMap(headersObj);
     Map<String, String> parameters = JSObjectToMap(parametersObj);
 
     try {
+      String mimeType = call.getString("mimeType", getMimeType(filePath)); // Add this line
+
       String id = implementation.startUpload(
         filePath,
         serverUrl,
