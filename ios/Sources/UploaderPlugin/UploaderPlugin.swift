@@ -2,7 +2,7 @@ import Foundation
 import Capacitor
 
 @objc(UploaderPlugin)
-public class UploaderPlugin: CAPPlugin {
+public class UploaderPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "UploaderPlugin"
     public let jsName = "Uploader"
     public let pluginMethods: [CAPPluginMethod] = [
