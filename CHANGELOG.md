@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.25](https://github.com/Cap-go/capacitor-uploader/compare/0.0.24...0.0.25) (2024-10-29)
+
+
+### Bug Fixes
+
+* licence ([cf89416](https://github.com/Cap-go/capacitor-uploader/commit/cf89416acf58d3be85aa241b9f4527c0b361992d))
+
 ### [0.0.24](https://github.com/Cap-go/capacitor-uploader/compare/0.0.23...0.0.24) (2024-10-28)
 
 ### [0.0.23](https://github.com/Cap-go/capacitor-uploader/compare/0.0.22...0.0.23) (2024-10-28)
