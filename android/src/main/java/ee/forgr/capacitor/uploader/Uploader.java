@@ -9,17 +9,14 @@ import java.util.Map;
 import net.gotev.uploadservice.UploadServiceConfig;
 import net.gotev.uploadservice.data.UploadNotificationConfig;
 import net.gotev.uploadservice.data.UploadNotificationStatusConfig;
-import net.gotev.uploadservice.observer.request.RequestObserverDelegate;
 import net.gotev.uploadservice.protocols.binary.BinaryUploadRequest;
 
 public class Uploader {
 
   private final Context context;
-  private final RequestObserverDelegate delegate;
 
-  public Uploader(Context context, RequestObserverDelegate delegate) {
+  public Uploader(Context context) {
     this.context = context;
-    this.delegate = delegate;
     initializeUploadService(context);
   }
 
