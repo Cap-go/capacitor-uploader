@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.36](https://github.com/Cap-go/capacitor-uploader/compare/0.0.35...0.0.36) (2024-11-11)
+
+
+### Bug Fixes
+
+* **deps:** update dependency com.android.tools.build:gradle to v8.7.2 ([#19](https://github.com/Cap-go/capacitor-uploader/issues/19)) ([d308c42](https://github.com/Cap-go/capacitor-uploader/commit/d308c426223cda9b3420fb1f362d587eb98411bc))
+
 ### [0.0.35](https://github.com/Cap-go/capacitor-uploader/compare/0.0.34...0.0.35) (2024-11-11)
 
 ### [0.0.34](https://github.com/Cap-go/capacitor-uploader/compare/0.0.33...0.0.34) (2024-11-11)
