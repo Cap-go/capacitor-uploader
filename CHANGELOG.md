@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.37](https://github.com/Cap-go/capacitor-uploader/compare/0.0.36...0.0.37) (2024-11-18)
+
+
+### Bug Fixes
+
+* **deps:** update dependency net.gotev:uploadservice to v4.9.3 ([#20](https://github.com/Cap-go/capacitor-uploader/issues/20)) ([bf3fc46](https://github.com/Cap-go/capacitor-uploader/commit/bf3fc4614b9d154393bf2a9929b23fb1e057c3f7))
+
 ### [0.0.36](https://github.com/Cap-go/capacitor-uploader/compare/0.0.35...0.0.36) (2024-11-11)
 
 
