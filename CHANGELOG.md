@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.62](https://github.com/Cap-go/capacitor-uploader/compare/0.0.61...0.0.62) (2025-01-23)
+
 ### [0.0.61](https://github.com/Cap-go/capacitor-uploader/compare/0.0.60...0.0.61) (2025-01-20)
 
 ### [0.0.60](https://github.com/Cap-go/capacitor-uploader/compare/0.0.59...0.0.60) (2025-01-20)
