@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [7.1.0](https://github.com/Cap-go/capacitor-uploader/compare/0.0.66...7.1.0) (2025-02-08)
+
+
+### Features
+
+* migrate to capacitor v7 ([91c8aff](https://github.com/Cap-go/capacitor-uploader/commit/91c8aff6d7f79d63244fadc35a7704e2b1636b27))
+
+
+### Bug Fixes
+
+* docgen ([87cc365](https://github.com/Cap-go/capacitor-uploader/commit/87cc365e636144e2a9973b71dd17a043f93fe45f))
+* lint + CI ([c102f8a](https://github.com/Cap-go/capacitor-uploader/commit/c102f8a75fb8e75d9a66205cef83fe00f3055cb2))
+
 ### [0.0.66](https://github.com/Cap-go/capacitor-uploader/compare/0.0.65...0.0.66) (2025-02-03)
 
 
