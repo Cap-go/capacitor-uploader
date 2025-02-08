@@ -46,6 +46,18 @@ export interface uploadOption {
    * @description The maximum number of retries
    */
   maxRetries?: number;
+  /**
+   * @since 0.0.2
+   * @description The type of upload to use
+   * @default 'binary'
+   */
+  uploadType?: "binary" | "multipart";
+  /**
+   * @since 0.0.2
+   * @description The form field name for the file when using multipart
+   * @default 'file'
+   */
+  fileField?: string;
 }
 export interface UploadEvent {
   /**

@@ -135,12 +135,14 @@ public class UploaderPlugin extends Plugin {
       "File Upload"
     );
     int maxRetries = call.getInt("maxRetries", 2);
+    String uploadType = call.getString("uploadType", "binary");
+    String fileField = call.getString("fileField", "file");
 
     Map<String, String> headers = JSObjectToMap(headersObj);
     Map<String, String> parameters = JSObjectToMap(parametersObj);
 
     try {
-      String mimeType = call.getString("mimeType", getMimeType(filePath)); // Add this line
+      String mimeType = call.getString("mimeType", getMimeType(filePath));
 
       String id = implementation.startUpload(
         filePath,
@@ -150,7 +152,9 @@ public class UploaderPlugin extends Plugin {
         httpMethod,
         notificationTitle,
         maxRetries,
-        mimeType
+        mimeType,
+        uploadType,
+        fileField
       );
       JSObject result = new JSObject();
       result.put("id", id);

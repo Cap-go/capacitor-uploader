@@ -10,6 +10,7 @@ import net.gotev.uploadservice.UploadServiceConfig;
 import net.gotev.uploadservice.data.UploadNotificationConfig;
 import net.gotev.uploadservice.data.UploadNotificationStatusConfig;
 import net.gotev.uploadservice.protocols.binary.BinaryUploadRequest;
+import net.gotev.uploadservice.protocols.multipart.MultipartUploadRequest;
 
 public class Uploader {
 
@@ -51,41 +52,78 @@ public class Uploader {
     String httpMethod,
     String notificationTitle,
     int maxRetries,
-    String mimeType
+    String mimeType,
+    String uploadType,
+    String fileField
   ) throws Exception {
     UploadNotificationConfig notificationConfig = createNotificationConfig(
       notificationTitle
     );
 
+    if ("multipart".equals(uploadType)) {
+      MultipartUploadRequest request = new MultipartUploadRequest(
+        context,
+        serverUrl
+      )
+        .setMethod(httpMethod)
+        .setNotificationConfig((ctx, uploadId) -> notificationConfig)
+        .setMaxRetries(maxRetries);
+
+      request.addFileToUpload(
+        filePath,
+        fileField,
+        getFileNameFromUri(Uri.parse(filePath)),
+        mimeType
+      );
+
+      for (Map.Entry<String, String> entry : headers.entrySet()) {
+        request.addHeader(entry.getKey(), entry.getValue());
+      }
+      for (Map.Entry<String, String> entry : parameters.entrySet()) {
+        request.addParameter(entry.getKey(), entry.getValue());
+      }
+
+      return request.startUpload();
+    } else {
+      return startBinaryUpload(
+        filePath,
+        serverUrl,
+        headers,
+        parameters,
+        httpMethod,
+        notificationConfig,
+        maxRetries,
+        mimeType
+      );
+    }
+  }
+
+  private String startBinaryUpload(
+    String filePath,
+    String serverUrl,
+    Map<String, String> headers,
+    Map<String, String> parameters,
+    String httpMethod,
+    UploadNotificationConfig notificationConfig,
+    int maxRetries,
+    String mimeType
+  ) throws Exception {
     BinaryUploadRequest request = new BinaryUploadRequest(context, serverUrl)
       .setMethod(httpMethod)
       .setFileToUpload(filePath)
       .setNotificationConfig((ctx, uploadId) -> notificationConfig)
       .setMaxRetries(maxRetries);
 
-    // Set the Content-Type header for the file
     request.addHeader("Content-Type", mimeType);
 
-    // Add headers
     for (Map.Entry<String, String> entry : headers.entrySet()) {
       request.addHeader(entry.getKey(), entry.getValue());
     }
 
-    // Add parameters
     for (Map.Entry<String, String> entry : parameters.entrySet()) {
       request.addParameter(entry.getKey(), entry.getValue());
     }
 
-    // Set file name if it's a content URI
-    if (filePath.startsWith("content://")) {
-      Uri uri = Uri.parse(filePath);
-      String fileName = getFileNameFromUri(uri);
-      if (fileName != null) {
-        request.addParameter("filename", fileName);
-      }
-    }
-
-    // Start the upload
     return request.startUpload();
   }
 

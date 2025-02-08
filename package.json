@@ -1,6 +1,6 @@
 {
   "name": "@capgo/capacitor-uploader",
-  "version": "0.0.66",
+  "version": "7.0.0",
   "description": "Upload file natively",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",
@@ -48,15 +48,15 @@
   ],
   "scripts": {
     "verify": "npm run verify:ios && npm run verify:android && npm run verify:web",
-    "verify:ios": "xcodebuild -scheme CapgoCapacitorUploader -destination generic/platform=iOS",
+    "verify:ios": "cd ios && pod install && xcodebuild -workspace Plugin.xcworkspace -sdk iphoneos -scheme Plugin && cd ..",
     "verify:android": "cd android && ./gradlew clean build test && cd ..",
     "verify:web": "npm run build",
     "lint": "npm run eslint && npm run prettier -- --check && npm run swiftlint -- lint",
     "fmt": "npm run eslint -- --fix && npm run prettier -- --write && npm run swiftlint -- --autocorrect --format",
-    "eslint": "eslint . --ext .ts",
+    "eslint": "eslint .",
     "prettier": "prettier --config .prettierrc.js \"**/*.{css,html,ts,js,java}\"",
     "swiftlint": "node-swiftlint",
-    "docgen": "docgen --api UploaderPlugin --output-readme README.md --output-json dist/docs.json",
+    "docgen": "docgen --api InAppBrowserPlugin --output-readme README.md --output-json dist/docs.json",
     "build": "npm run clean && npm run docgen && tsc && rollup -c rollup.config.mjs",
     "clean": "rimraf ./dist",
     "watch": "tsc --watch",
@@ -71,28 +71,25 @@
     "@ionic/eslint-config": "^0.4.0",
     "@ionic/prettier-config": "^4.0.0",
     "@ionic/swiftlint-config": "^2.0.0",
-    "@types/node": "^20.12.12",
-    "@typescript-eslint/eslint-plugin": "^7.11.0",
-    "@typescript-eslint/parser": "^7.11.0",
+    "@types/node": "^22.13.1",
     "eslint": "^8.57.0",
-    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-import": "^2.31.0",
+    "husky": "^9.1.7",
     "prettier": "^3.4.2",
-    "prettier-plugin-java": "^2.6.6",
+    "prettier-plugin-java": "^2.6.7",
     "rimraf": "^6.0.1",
-    "rollup": "^4.30.1",
+    "rollup": "^4.34.6",
     "swiftlint": "^2.0.0",
-    "typescript": "^5.4.5"
+    "typescript": "^5.7.3"
   },
   "peerDependencies": {
     "@capacitor/core": ">=7.0.0"
   },
-  "prettier": "@ionic/prettier-config",
   "eslintConfig": {
-    "extends": "@ionic/eslint-config/recommended",
-    "rules": {
-      "@typescript-eslint/prefer-optional-chain": "off"
-    }
+    "extends": "@ionic/eslint-config/recommended"
   },
+  "prettier": "@ionic/prettier-config",
+  "swiftlint": "@ionic/swiftlint-config",
   "capacitor": {
     "ios": {
       "src": "ios"
@@ -100,6 +97,5 @@
     "android": {
       "src": "android"
     }
-  },
-  "packageManager": "pnpm@9.15.5+sha512.845196026aab1cc3f098a0474b64dfbab2afe7a1b4e91dd86895d8e4aa32a7a6d03049e2d0ad770bbe4de023a7122fb68c1a1d6e0d033c7076085f9d5d4800d4"
+  }
 }
