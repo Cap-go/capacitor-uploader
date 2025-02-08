@@ -252,6 +252,8 @@ addListener(eventName: "events", listenerFunc: (state: UploadEvent) => void) => 
 | **`mimeType`**          | <code>string</code>                     |                          | 0.0.1 |
 | **`parameters`**        | <code>{ [key: string]: string; }</code> |                          | 0.0.1 |
 | **`maxRetries`**        | <code>number</code>                     |                          | 0.0.1 |
+| **`uploadType`**        | <code>'binary' \| 'multipart'</code>    | <code>'binary'</code>    | 0.0.2 |
+| **`fileField`**         | <code>string</code>                     | <code>'file'</code>      | 0.0.2 |
 
 
 #### PluginListenerHandle
