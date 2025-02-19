@@ -1,4 +1,7 @@
 import { WebPlugin } from "@capacitor/core";
+import { openDB } from 'idb';
+
+import { PathHelper } from "./PathHelper";
 
 import type { UploaderPlugin, uploadOption } from "./definitions";
 
@@ -94,16 +97,57 @@ export class UploaderWeb extends WebPlugin implements UploaderPlugin {
   }
 
   private async getFileFromPath(filePath: string): Promise<File | null> {
-    // This is a simplified version. In a real-world scenario,
-    // you might need to handle different types of paths or use a file system API.
+    // Check if the path is an IndexedDB path
+    if (PathHelper.isIndexedDBPath(filePath)) {
+      return this.getFileFromIndexedDB(filePath);
+    }
+
+    // Otherwise, treat it as a file path from the system
+    return this.getFileFromSystem(filePath);
+  }
+
+  // Retrieve the file from IndexedDB
+  private async getFileFromIndexedDB(filePath: string): Promise<File | null> {
+    // Parse the path to get the database, store name, and key
+    const { database, storeName, key } = PathHelper.parseIndexedDBPath(filePath);
+
     try {
+      // Open the IndexedDB database and access the object store
+      const db = await openDB(database, 1, {
+        upgrade(db) {
+          if (!db.objectStoreNames.contains(storeName)) {
+            db.createObjectStore(storeName);
+          }
+        },
+      });
+
+      // Get the blob from the store
+      const blob = await db.get(storeName, key);
+      if (!blob) {
+        console.error(`File with key "${key}" not found in store "${storeName}" in database "${database}"`);
+        return null;
+      }
+
+      // Convert the Blob to a File object
+      return new File([blob], key, { type: blob.type });
+    } catch (error) {
+      console.error('Error retrieving file from IndexedDB:', error);
+      return null;
+    }
+  }
+
+  // Retrieve the file from the system (local file)
+  private async getFileFromSystem(filePath: string): Promise<File | null> {
+    try {
+      // This is a simplified version. In a real-world scenario,
+      // you might need to handle different types of paths or use a file system API.
       const response = await fetch(filePath);
       const blob = await response.blob();
       return new File([blob], filePath.split("/").pop() || "file", {
         type: blob.type,
       });
     } catch (error) {
-      console.error("Error getting file:", error);
+      console.error("Error getting file from system:", error);
       return null;
     }
   }
