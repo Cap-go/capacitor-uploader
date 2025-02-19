@@ -12,6 +12,10 @@ This plugin provides a flexible way to upload natively files to various servers,
 
 Can be used in combination with the [Capacitor Camera preview](https://github.com/Cap-go/camera-preview) To upload file in reliable manner instead of reading them in buffer of webview and then upload in JS.
 
+On the web, file paths support IndexedDB (IDB) semantic paths using the following format:  
+`idb://[database-name]/[collection-name]/[key]`  
+This allows seamless integration with IndexedDB for storing and retrieving files.
+
 ## Install
 
 ```bash
@@ -28,9 +32,6 @@ Add the following to your `AndroidManifest.xml` file:
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 ```
-
-## Exemple S3 upload:
-
 
 ## Example S3 upload:
 
@@ -67,7 +68,7 @@ async function uploadToS3(filePath: string, presignedUrl: string, fields: Record
 
 ```
 
-### Exemple upload to a custom server:
+### Example upload to a custom server:
 
 ```typescript
 import { Uploader } from '@capgo/capacitor-uploader';
@@ -118,12 +119,13 @@ async function uploadToCustomServer(filePath: string, serverUrl: string) {
 
 // Usage
 const filePath = 'file:///path/to/your/file.jpg';
+
 const serverUrl = 'https://your-custom-server.com/upload';
 uploadToCustomServer(filePath, serverUrl);
 
 ```
 
-### Exemple with Capacitor Camera preview:
+### Example with Capacitor Camera preview:
 
 Documentation for the [Capacitor Camera preview](https://github.com/Cap-go/camera-preview)
 
