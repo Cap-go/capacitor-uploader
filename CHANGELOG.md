@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [7.1.1](https://github.com/Cap-go/capacitor-uploader/compare/7.1.0...7.1.1) (2025-05-06)
+
+
+### Bug Fixes
+
+* delete old files ([c84739f](https://github.com/Cap-go/capacitor-uploader/commit/c84739f294a5c0c031943e34fbd4efd3ec39fd33))
+* ios build ([cc58e89](https://github.com/Cap-go/capacitor-uploader/commit/cc58e89ae1a2caa03bfb79c08f14c5510bb478a7))
+
 ## [7.1.0](https://github.com/Cap-go/capacitor-uploader/compare/0.0.66...7.1.0) (2025-02-08)
 
 
