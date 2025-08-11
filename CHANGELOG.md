@@ -1,6 +1,8 @@
 # Changelog
 
-All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
+
+## [7.1.9](https://github.com/Cap-go/capacitor-uploader/compare/7.1.8...7.1.9) (2025-08-11)
 
 ### [7.1.8](https://github.com/Cap-go/capacitor-uploader/compare/7.1.7...7.1.8) (2025-07-19)
 
