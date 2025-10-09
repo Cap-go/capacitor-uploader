@@ -1,0 +1,10 @@
+{
+  "appId": "com.example.capgo.capacitor.uploader",
+  "appName": "@capgo/capacitor-uploader example",
+  "webDir": "dist",
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": false
+    }
+  }
+}
