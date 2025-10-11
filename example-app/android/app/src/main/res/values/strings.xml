@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Uploader Example</string>
+    <string name="title_activity_main">Uploader Example</string>
+    <string name="package_name">app.capgo.uploader</string>
+    <string name="custom_url_scheme">app.capgo.uploader</string>
+</resources>

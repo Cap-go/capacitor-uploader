@@ -1,6 +1,6 @@
 {
-  "appId": "com.example.plugin",
-  "appName": "example",
+  "appId": "app.capgo.uploader",
+  "appName": "Uploader Example",
   "webDir": "dist",
   "plugins": {
     "SplashScreen": {
