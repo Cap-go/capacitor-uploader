@@ -159,7 +159,7 @@ public class UploaderPlugin extends Plugin {
     private Map<String, String> JSObjectToMap(JSObject object) {
         Map<String, String> map = new HashMap<>();
         if (object != null) {
-            for (Iterator<String> it = object.keys(); it.hasNext();) {
+            for (Iterator<String> it = object.keys(); it.hasNext(); ) {
                 String key = it.next();
                 map.put(key, object.getString(key));
             }
