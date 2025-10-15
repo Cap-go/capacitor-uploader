@@ -222,7 +222,7 @@ removeUpload(options: { id: string; }) => Promise<void>
 ### addListener('events', ...)
 
 ```typescript
-addListener(eventName: "events", listenerFunc: (state: UploadEvent) => void) => Promise<PluginListenerHandle>
+addListener(eventName: 'events', listenerFunc: (state: UploadEvent) => void) => Promise<PluginListenerHandle>
 ```
 
 | Param              | Type                                                                    |
