@@ -1,6 +1,6 @@
 {
   "name": "@capgo/capacitor-uploader",
-  "version": "7.1.22",
+  "version": "7.1.23",
   "description": "Upload file natively",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",
