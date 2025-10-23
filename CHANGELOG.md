@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [7.2.1](https://github.com/Cap-go/capacitor-uploader/compare/7.2.0...7.2.1) (2025-10-23)
+
+
+### Bug Fixes
+
+* remove footer in discord ([133bf1d](https://github.com/Cap-go/capacitor-uploader/commit/133bf1dcb440b01d13c0122e1312654fab150c57))
+* update Discord release notification username to include repository name ([6634d29](https://github.com/Cap-go/capacitor-uploader/commit/6634d2938282643134c0564572c8603c5fc4d122))
+
 ## [7.2.0](https://github.com/Cap-go/capacitor-uploader/compare/7.1.23...7.2.0) (2025-10-23)
 
 
