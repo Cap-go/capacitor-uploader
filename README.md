@@ -180,6 +180,7 @@ Documentation for the [Capacitor Camera preview](https://github.com/Cap-go/camer
 * [`startUpload(...)`](#startupload)
 * [`removeUpload(...)`](#removeupload)
 * [`addListener('events', ...)`](#addlistenerevents-)
+* [`getPluginVersion()`](#getpluginversion)
 * [Interfaces](#interfaces)
 
 </docgen-index>
@@ -233,6 +234,19 @@ addListener(eventName: 'events', listenerFunc: (state: UploadEvent) => void) => 
 **Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
 
 **Since:** 0.0.1
+
+--------------------
+
+
+### getPluginVersion()
+
+```typescript
+getPluginVersion() => Promise<{ version: string; }>
+```
+
+Get the native Capacitor plugin version
+
+**Returns:** <code>Promise&lt;{ version: string; }&gt;</code>
 
 --------------------
 
