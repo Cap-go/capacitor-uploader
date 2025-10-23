@@ -21,6 +21,8 @@ import net.gotev.uploadservice.observer.request.RequestObserverDelegate;
 @CapacitorPlugin(name = "Uploader")
 public class UploaderPlugin extends Plugin {
 
+    private final String PLUGIN_VERSION = "";
+
     private Uploader implementation;
 
     private static final String CHANNEL_ID = "ee.forgr.capacitor.uploader.notification_channel_id";
@@ -165,5 +167,16 @@ public class UploaderPlugin extends Plugin {
             }
         }
         return map;
+    }
+
+    @PluginMethod
+    public void getPluginVersion(final PluginCall call) {
+        try {
+            final JSObject ret = new JSObject();
+            ret.put("version", this.PLUGIN_VERSION);
+            call.resolve(ret);
+        } catch (final Exception e) {
+            call.reject("Could not get plugin version", e);
+        }
     }
 }

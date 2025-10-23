@@ -97,4 +97,8 @@ export class UploaderWeb extends WebPlugin implements UploaderPlugin {
       return null;
     }
   }
+
+  async getPluginVersion(): Promise<{ version: string }> {
+    return { version: 'web' };
+  }
 }
