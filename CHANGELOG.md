@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [7.2.0](https://github.com/Cap-go/capacitor-uploader/compare/7.1.23...7.2.0) (2025-10-23)
+
+
+### Features
+
+* add getPluginVersion method to UploaderPlugin and its web implementation; update workflows for changelog generation and Discord notifications ([39623ed](https://github.com/Cap-go/capacitor-uploader/commit/39623ede4f30524899eb190ba7cc6834e42578e6))
+
+
+### Bug Fixes
+
+* remove content field from Discord release notification ([1a5dce7](https://github.com/Cap-go/capacitor-uploader/commit/1a5dce7633227bfc5f7583d2dbb2e0d6455d2832))
+
 ## [7.1.23](https://github.com/Cap-go/capacitor-uploader/compare/7.1.22...7.1.23) (2025-10-16)
 
 ## [7.1.22](https://github.com/Cap-go/capacitor-uploader/compare/7.1.21...7.1.22) (2025-10-15)
