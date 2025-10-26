@@ -11,9 +11,7 @@ const actions = [
               id: 'start-upload',
               label: 'Start upload',
               description: 'Starts uploading a file to the provided server.',
-              inputs: [{ name: 'filePath', label: 'File path', type: 'text', placeholder: '/absolute/path/to/file' }, { name: 'serverUrl', label: 'Server URL', type: 'text', placeholder: 'https://example.com/upload' }, { name: 'headers', label: 'Headers (JSON)', type: 'textarea', value: '{
-  "Content-Type": "application/octet-stream"
-}', rows: 4 }, { name: 'method', label: 'HTTP method', type: 'select', value: 'POST', options: [{ value: 'POST', label: 'POST' }, { value: 'PUT', label: 'PUT' }] }, { name: 'mimeType', label: 'Mime type (optional)', type: 'text', placeholder: 'application/octet-stream' }, { name: 'uploadType', label: 'Upload type', type: 'select', value: 'binary', options: [{ value: 'binary', label: 'binary' }, { value: 'multipart', label: 'multipart' }] }, { name: 'fileField', label: 'Multipart file field (optional)', type: 'text', placeholder: 'file' }],
+              inputs: [{ name: 'filePath', label: 'File path', type: 'text', placeholder: '/absolute/path/to/file' }, { name: 'serverUrl', label: 'Server URL', type: 'text', placeholder: 'https://example.com/upload' }, { name: 'headers', label: 'Headers (JSON)', type: 'textarea', value: '{\n  "Content-Type": "application/octet-stream"\n}', rows: 4 }, { name: 'method', label: 'HTTP method', type: 'select', value: 'POST', options: [{ value: 'POST', label: 'POST' }, { value: 'PUT', label: 'PUT' }] }, { name: 'mimeType', label: 'Mime type (optional)', type: 'text', placeholder: 'application/octet-stream' }, { name: 'uploadType', label: 'Upload type', type: 'select', value: 'binary', options: [{ value: 'binary', label: 'binary' }, { value: 'multipart', label: 'multipart' }] }, { name: 'fileField', label: 'Multipart file field (optional)', type: 'text', placeholder: 'file' }],
               run: async (values) => {
                 if (!values.filePath) {
   throw new Error('Provide a file path.');
@@ -26,7 +24,7 @@ if (values.headers) {
   try {
     headers = JSON.parse(values.headers);
   } catch (err) {
-    throw new Error(\`Invalid headers JSON: ${err.message}\`);
+    throw new Error(`Invalid headers JSON: ${err.message}`);
   }
 }
 const options = {
@@ -54,7 +52,7 @@ if (!id) {
   throw new Error('Provide an upload id first.');
 }
 await plugin.removeUpload({ id });
-return \`Upload ${id} removed.\`;
+return `Upload ${id} removed.`;
               },
             }
 ];
