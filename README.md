@@ -12,6 +12,10 @@ This plugin provides a flexible way to upload natively files to various servers,
 
 Can be used in combination with the [Capacitor Camera preview](https://github.com/Cap-go/camera-preview) To upload file in reliable manner instead of reading them in buffer of webview and then upload in JS.
 
+## Documentation
+
+The most complete doc is available here: https://capgo.app/docs/plugins/uploader/
+
 ## Install
 
 ```bash
