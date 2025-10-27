@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [7.2.4](https://github.com/Cap-go/capacitor-uploader/compare/7.2.3...7.2.4) (2025-10-27)
+
+
+### Bug Fixes
+
+* script ([75f9439](https://github.com/Cap-go/capacitor-uploader/commit/75f94394b9e899394cdf340d7f58c0e138070411))
+
 ## [7.2.3](https://github.com/Cap-go/capacitor-uploader/compare/7.2.2...7.2.3) (2025-10-26)
 
 
