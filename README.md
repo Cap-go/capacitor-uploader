@@ -192,15 +192,22 @@ Documentation for the [Capacitor Camera preview](https://github.com/Cap-go/camer
 <docgen-api>
 <!--Update the source file JSDoc comments and rerun docgen to update the docs below-->
 
+Capacitor Uploader Plugin for uploading files with background support and progress tracking.
+
 ### startUpload(...)
 
 ```typescript
 startUpload(options: uploadOption) => Promise<{ id: string; }>
 ```
 
-| Param         | Type                                                  | Description                              |
-| ------------- | ----------------------------------------------------- | ---------------------------------------- |
-| **`options`** | <code><a href="#uploadoption">uploadOption</a></code> | <a href="#uploadoption">uploadOption</a> |
+Start uploading a file to a server.
+
+The upload will continue in the background even if the app is closed or backgrounded.
+Listen to upload events to track progress, completion, or failure.
+
+| Param         | Type                                                  | Description                    |
+| ------------- | ----------------------------------------------------- | ------------------------------ |
+| **`options`** | <code><a href="#uploadoption">uploadOption</a></code> | - Configuration for the upload |
 
 **Returns:** <code>Promise&lt;{ id: string; }&gt;</code>
 
@@ -215,9 +222,13 @@ startUpload(options: uploadOption) => Promise<{ id: string; }>
 removeUpload(options: { id: string; }) => Promise<void>
 ```
 
-| Param         | Type                         |
-| ------------- | ---------------------------- |
-| **`options`** | <code>{ id: string; }</code> |
+Cancel and remove an ongoing upload.
+
+This will stop the upload if it's in progress and clean up resources.
+
+| Param         | Type                         | Description                                 |
+| ------------- | ---------------------------- | ------------------------------------------- |
+| **`options`** | <code>{ id: string; }</code> | - Object containing the upload ID to remove |
 
 **Since:** 0.0.1
 
@@ -230,10 +241,17 @@ removeUpload(options: { id: string; }) => Promise<void>
 addListener(eventName: 'events', listenerFunc: (state: UploadEvent) => void) => Promise<PluginListenerHandle>
 ```
 
-| Param              | Type                                                                    |
-| ------------------ | ----------------------------------------------------------------------- |
-| **`eventName`**    | <code>'events'</code>                                                   |
-| **`listenerFunc`** | <code>(state: <a href="#uploadevent">UploadEvent</a>) =&gt; void</code> |
+Listen for upload progress and status events.
+
+Events are fired for:
+- Upload progress updates (with percent)
+- Upload completion (with statusCode)
+- Upload failure (with error and statusCode)
+
+| Param              | Type                                                                    | Description                                 |
+| ------------------ | ----------------------------------------------------------------------- | ------------------------------------------- |
+| **`eventName`**    | <code>'events'</code>                                                   | - Must be 'events'                          |
+| **`listenerFunc`** | <code>(state: <a href="#uploadevent">UploadEvent</a>) =&gt; void</code> | - Callback function to handle upload events |
 
 **Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
 
@@ -248,9 +266,11 @@ addListener(eventName: 'events', listenerFunc: (state: UploadEvent) => void) => 
 getPluginVersion() => Promise<{ version: string; }>
 ```
 
-Get the native Capacitor plugin version
+Get the native Capacitor plugin version.
 
 **Returns:** <code>Promise&lt;{ version: string; }&gt;</code>
+
+**Since:** 0.0.1
 
 --------------------
 
@@ -260,18 +280,20 @@ Get the native Capacitor plugin version
 
 #### uploadOption
 
-| Prop                    | Type                                    | Default                  | Since |
-| ----------------------- | --------------------------------------- | ------------------------ | ----- |
-| **`filePath`**          | <code>string</code>                     |                          | 0.0.1 |
-| **`serverUrl`**         | <code>string</code>                     |                          | 0.0.1 |
-| **`notificationTitle`** | <code>number</code>                     | <code>'Uploading'</code> | 0.0.1 |
-| **`headers`**           | <code>{ [key: string]: string; }</code> |                          | 0.0.1 |
-| **`method`**            | <code>'PUT' \| 'POST'</code>            | <code>'POST'</code>      | 0.0.1 |
-| **`mimeType`**          | <code>string</code>                     |                          | 0.0.1 |
-| **`parameters`**        | <code>{ [key: string]: string; }</code> |                          | 0.0.1 |
-| **`maxRetries`**        | <code>number</code>                     |                          | 0.0.1 |
-| **`uploadType`**        | <code>'binary' \| 'multipart'</code>    | <code>'binary'</code>    | 0.0.2 |
-| **`fileField`**         | <code>string</code>                     | <code>'file'</code>      | 0.0.2 |
+Configuration options for uploading a file.
+
+| Prop                    | Type                                    | Description                                                                                                                                               | Default                  | Since |
+| ----------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ----- |
+| **`filePath`**          | <code>string</code>                     | The local file path of the file to upload. Can be a file:// URL or an absolute path.                                                                      |                          | 0.0.1 |
+| **`serverUrl`**         | <code>string</code>                     | The server URL endpoint where the file should be uploaded.                                                                                                |                          | 0.0.1 |
+| **`notificationTitle`** | <code>number</code>                     | The title of the upload notification shown to the user. Android only.                                                                                     | <code>'Uploading'</code> | 0.0.1 |
+| **`headers`**           | <code>{ [key: string]: string; }</code> | HTTP headers to send with the upload request. Useful for authentication tokens, content types, etc.                                                       |                          | 0.0.1 |
+| **`method`**            | <code>'PUT' \| 'POST'</code>            | The HTTP method to use for the upload request.                                                                                                            | <code>'POST'</code>      | 0.0.1 |
+| **`mimeType`**          | <code>string</code>                     | The MIME type of the file being uploaded. If not specified, the plugin will attempt to determine it automatically.                                        |                          | 0.0.1 |
+| **`parameters`**        | <code>{ [key: string]: string; }</code> | Additional form parameters to send with the upload request. These will be included as form data in multipart uploads.                                     |                          | 0.0.1 |
+| **`maxRetries`**        | <code>number</code>                     | The maximum number of times to retry the upload if it fails.                                                                                              | <code>0</code>           | 0.0.1 |
+| **`uploadType`**        | <code>'binary' \| 'multipart'</code>    | The type of upload to perform. - 'binary': Uploads the file as raw binary data in the request body - 'multipart': Uploads the file as multipart/form-data | <code>'binary'</code>    | 0.0.2 |
+| **`fileField`**         | <code>string</code>                     | The form field name for the file when using multipart upload type. Only used when uploadType is 'multipart'.                                              | <code>'file'</code>      | 0.0.2 |
 
 
 #### PluginListenerHandle
@@ -283,11 +305,13 @@ Get the native Capacitor plugin version
 
 #### UploadEvent
 
-| Prop          | Type                                                                    | Description                                  | Default                                               | Since |
-| ------------- | ----------------------------------------------------------------------- | -------------------------------------------- | ----------------------------------------------------- | ----- |
-| **`name`**    | <code>'uploading' \| 'completed' \| 'failed'</code>                     | Current status of upload, between 0 and 100. |                                                       | 0.0.1 |
-| **`payload`** | <code>{ percent?: number; error?: string; statusCode?: number; }</code> |                                              | <code>{ percent: 0, error: '', statusCode: 0 }</code> | 0.0.1 |
-| **`id`**      | <code>string</code>                                                     |                                              |                                                       | 0.0.1 |
+Event emitted during the upload lifecycle.
+
+| Prop          | Type                                                                    | Description                                                                                                                                                | Since |
+| ------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| **`name`**    | <code>'uploading' \| 'completed' \| 'failed'</code>                     | The current status of the upload. - 'uploading': Upload is in progress - 'completed': Upload finished successfully - 'failed': Upload encountered an error | 0.0.1 |
+| **`payload`** | <code>{ percent?: number; error?: string; statusCode?: number; }</code> | Additional data about the upload event.                                                                                                                    | 0.0.1 |
+| **`id`**      | <code>string</code>                                                     | Unique identifier for this upload task.                                                                                                                    | 0.0.1 |
 
 </docgen-api>
 
