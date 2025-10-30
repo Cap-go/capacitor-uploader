@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [7.3.0](https://github.com/Cap-go/capacitor-uploader/compare/7.2.8...7.3.0) (2025-10-30)
+
+
+### Features
+
+* enhance uploader plugin documentation with background support and progress tracking details ([09cd91c](https://github.com/Cap-go/capacitor-uploader/commit/09cd91ca507e2ed16a9128a9c7ce6a2b5a2c3d16))
+
 ## [7.2.8](https://github.com/Cap-go/capacitor-uploader/compare/7.2.7...7.2.8) (2025-10-29)
 
 
