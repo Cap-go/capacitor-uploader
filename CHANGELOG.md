@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [7.3.1](https://github.com/Cap-go/capacitor-uploader/compare/7.3.0...7.3.1) (2025-10-30)
+
+
+### Bug Fixes
+
+* pluginVersion lint issue ([b8d74e9](https://github.com/Cap-go/capacitor-uploader/commit/b8d74e96f0ebee3382c223c08b4b346aa625e1da))
+
 ## [7.3.0](https://github.com/Cap-go/capacitor-uploader/compare/7.2.8...7.3.0) (2025-10-30)
 
 
