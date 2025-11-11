@@ -33,7 +33,7 @@ Add the following to your `AndroidManifest.xml` file:
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 ```
 
-## Exemple S3 upload:
+## Example S3 upload:
 
 
 ## Example S3 upload:
@@ -71,7 +71,7 @@ async function uploadToS3(filePath: string, presignedUrl: string, fields: Record
 
 ```
 
-### Exemple upload to a custom server:
+### Example upload to a custom server:
 
 ```typescript
 import { Uploader } from '@capgo/capacitor-uploader';
@@ -127,7 +127,7 @@ uploadToCustomServer(filePath, serverUrl);
 
 ```
 
-### Exemple with Capacitor Camera preview:
+### Example with Capacitor Camera preview:
 
 Documentation for the [Capacitor Camera preview](https://github.com/Cap-go/camera-preview)
 
