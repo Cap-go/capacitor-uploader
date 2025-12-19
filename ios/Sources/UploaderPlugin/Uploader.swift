@@ -75,15 +75,8 @@ import MobileCoreServices
 
     private func guessMIMEType(from filePath: String) -> String {
         let url = URL(fileURLWithPath: filePath)
-        if #available(iOS 14.0, *) {
-            if let mimeType = UTType(filenameExtension: url.pathExtension)?.preferredMIMEType {
-                return mimeType
-            }
-        } else {
-            if let uti = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, url.pathExtension as CFString, nil)?.takeRetainedValue(),
-               let mimeType = UTTypeCopyPreferredTagWithClass(uti, kUTTagClassMIMEType)?.takeRetainedValue() as String? {
-                return mimeType
-            }
+        if let mimeType = UTType(filenameExtension: url.pathExtension)?.preferredMIMEType {
+            return mimeType
         }
         return "application/octet-stream"
     }
