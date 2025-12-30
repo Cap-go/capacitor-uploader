@@ -20,9 +20,12 @@ public class UploaderPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     @objc func startUpload(_ call: CAPPluginCall) {
-        guard let filePath = call.getString("filePath"),
-              let serverUrl = call.getString("serverUrl") else {
-            call.reject("Missing required parameters")
+        guard let filePath = call.getString("filePath") else {
+            call.reject("Missing required parameter: filePath")
+            return
+        }
+        guard let serverUrl = call.getString("serverUrl") else {
+            call.reject("Missing required parameter: serverUrl")
             return
         }
 

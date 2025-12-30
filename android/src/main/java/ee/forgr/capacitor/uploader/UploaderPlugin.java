@@ -113,6 +113,16 @@ public class UploaderPlugin extends Plugin {
     public void startUpload(PluginCall call) {
         String filePath = call.getString("filePath");
         String serverUrl = call.getString("serverUrl");
+
+        if (filePath == null || filePath.isEmpty()) {
+            call.reject("Missing required parameter: filePath");
+            return;
+        }
+        if (serverUrl == null || serverUrl.isEmpty()) {
+            call.reject("Missing required parameter: serverUrl");
+            return;
+        }
+
         JSObject headersObj = call.getObject("headers", new JSObject());
         JSObject parametersObj = call.getObject("parameters", new JSObject());
         String httpMethod = call.getString("method", "POST");

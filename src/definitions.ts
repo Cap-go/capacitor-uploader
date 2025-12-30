@@ -28,7 +28,7 @@ export interface uploadOption {
    * @default 'Uploading'
    * @since 0.0.1
    */
-  notificationTitle?: number;
+  notificationTitle?: string;
 
   /**
    * HTTP headers to send with the upload request.
