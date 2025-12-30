@@ -160,6 +160,10 @@ public class UploaderPlugin extends Plugin {
     @PluginMethod
     public void removeUpload(PluginCall call) {
         String id = call.getString("id");
+        if (id == null || id.isEmpty()) {
+            call.reject("Missing required parameter: id");
+            return;
+        }
         try {
             implementation.removeUpload(id);
             call.resolve();
