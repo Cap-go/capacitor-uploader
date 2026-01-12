@@ -99,5 +99,8 @@
     "android": {
       "src": "android"
     }
+  },
+  "dependencies": {
+    "idb": "^8.0.2"
   }
 }
