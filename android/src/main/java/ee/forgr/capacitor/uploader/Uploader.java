@@ -63,10 +63,14 @@ public class Uploader {
             request.addFileToUpload(filePath, fileField, getFileNameFromUri(Uri.parse(filePath)), mimeType);
 
             for (Map.Entry<String, String> entry : headers.entrySet()) {
-                request.addHeader(entry.getKey(), entry.getValue());
+                if (entry.getKey() != null && entry.getValue() != null) {
+                    request.addHeader(entry.getKey(), entry.getValue());
+                }
             }
             for (Map.Entry<String, String> entry : parameters.entrySet()) {
-                request.addParameter(entry.getKey(), entry.getValue());
+                if (entry.getKey() != null && entry.getValue() != null) {
+                    request.addParameter(entry.getKey(), entry.getValue());
+                }
             }
 
             return request.startUpload();
@@ -91,14 +95,20 @@ public class Uploader {
             .setNotificationConfig((ctx, uploadId) -> notificationConfig)
             .setMaxRetries(maxRetries);
 
-        request.addHeader("Content-Type", mimeType);
+        if (mimeType != null && !mimeType.isEmpty()) {
+            request.addHeader("Content-Type", mimeType);
+        }
 
         for (Map.Entry<String, String> entry : headers.entrySet()) {
-            request.addHeader(entry.getKey(), entry.getValue());
+            if (entry.getKey() != null && entry.getValue() != null) {
+                request.addHeader(entry.getKey(), entry.getValue());
+            }
         }
 
         for (Map.Entry<String, String> entry : parameters.entrySet()) {
-            request.addParameter(entry.getKey(), entry.getValue());
+            if (entry.getKey() != null && entry.getValue() != null) {
+                request.addParameter(entry.getKey(), entry.getValue());
+            }
         }
 
         return request.startUpload();
