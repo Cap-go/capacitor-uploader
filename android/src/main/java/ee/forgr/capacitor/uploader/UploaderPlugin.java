@@ -123,8 +123,12 @@ public class UploaderPlugin extends Plugin {
             return;
         }
 
-        // Convert Capacitor web-accessible URLs to local file paths
-        // This handles URLs like http://.../_capacitor_file_/... from plugins like video-recorder
+        // Convert Capacitor web-accessible URLs to local file paths.
+        // Capacitor plugins (e.g., video-recorder) may provide file URLs using the web-accessible
+        // scheme like "http://localhost/_capacitor_file_/storage/emulated/0/...".
+        // getBridge().getLocalUrl() converts these to actual file system paths that can be used
+        // with native Android APIs. For already-local paths (file:// or absolute paths),
+        // getLocalUrl() returns null, so we safely fall back to the original path.
         String localFilePath = getBridge().getLocalUrl(filePath);
         if (localFilePath == null) {
             localFilePath = filePath;
