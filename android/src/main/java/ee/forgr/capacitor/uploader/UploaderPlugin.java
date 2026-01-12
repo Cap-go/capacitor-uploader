@@ -123,6 +123,13 @@ public class UploaderPlugin extends Plugin {
             return;
         }
 
+        // Convert Capacitor web-accessible URLs to local file paths
+        // This handles URLs like http://.../_capacitor_file_/... from plugins like video-recorder
+        String localFilePath = getBridge().getLocalUrl(filePath);
+        if (localFilePath == null) {
+            localFilePath = filePath;
+        }
+
         JSObject headersObj = call.getObject("headers", new JSObject());
         JSObject parametersObj = call.getObject("parameters", new JSObject());
         String httpMethod = call.getString("method", "POST");
@@ -135,10 +142,10 @@ public class UploaderPlugin extends Plugin {
         Map<String, String> parameters = JSObjectToMap(parametersObj);
 
         try {
-            String mimeType = call.getString("mimeType", getMimeType(filePath));
+            String mimeType = call.getString("mimeType", getMimeType(localFilePath));
 
             String id = implementation.startUpload(
-                filePath,
+                localFilePath,
                 serverUrl,
                 headers,
                 parameters,
