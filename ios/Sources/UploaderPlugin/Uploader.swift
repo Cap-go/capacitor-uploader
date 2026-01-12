@@ -8,6 +8,7 @@ import MobileCoreServices
     private var responsesData: [Int: Data] = [:]
     private var tasks: [String: URLSessionTask] = [:]
     private var retries: [String: Int] = [:]
+    private var tempFiles: [String: URL] = [:]
 
     var eventHandler: (([String: Any]) -> Void)?
 
@@ -44,9 +45,11 @@ import MobileCoreServices
 
             let parameters = options["parameters"] as? [String: String] ?? [:]
 
-            let dataBody = createDataBody(withParameters: parameters, filePath: filePath, mimeType: mimeType, boundary: boundary)
-
-            task = self.getUrlSession().uploadTask(with: request, from: dataBody)
+            // Write multipart data to a temporary file for background session compatibility
+            let tempFileUrl = try createMultipartFile(withParameters: parameters, filePath: filePath, mimeType: mimeType, boundary: boundary)
+            tempFiles[id] = tempFileUrl
+            
+            task = self.getUrlSession().uploadTask(with: request, fromFile: tempFileUrl)
         }
 
         task.taskDescription = id
@@ -62,6 +65,12 @@ import MobileCoreServices
         if let task = tasks[id] {
             task.cancel()
             tasks.removeValue(forKey: id)
+        }
+        
+        // Clean up temporary file if it exists
+        if let tempFileUrl = tempFiles[id] {
+            try? FileManager.default.removeItem(at: tempFileUrl)
+            tempFiles.removeValue(forKey: id)
         }
     }
 
@@ -102,6 +111,12 @@ import MobileCoreServices
             sendEvent(name: "completed", id: id, payload: payload)
         }
 
+        // Clean up temporary file if it exists
+        if let tempFileUrl = tempFiles[id] {
+            try? FileManager.default.removeItem(at: tempFileUrl)
+            tempFiles.removeValue(forKey: id)
+        }
+
         tasks.removeValue(forKey: id)
         retries.removeValue(forKey: id)
     }
@@ -124,6 +139,16 @@ import MobileCoreServices
             "payload": payload
         ]
         eventHandler?(event)
+    }
+
+    private func createMultipartFile(withParameters params: [String: String], filePath: String, mimeType: String, boundary: String) throws -> URL {
+        let tempDir = FileManager.default.temporaryDirectory
+        let tempFileUrl = tempDir.appendingPathComponent(UUID().uuidString)
+        
+        let dataBody = createDataBody(withParameters: params, filePath: filePath, mimeType: mimeType, boundary: boundary)
+        try dataBody.write(to: tempFileUrl)
+        
+        return tempFileUrl
     }
 
     private func createDataBody(withParameters params: [String: String], filePath: String, mimeType: String, boundary: String) -> Data {
