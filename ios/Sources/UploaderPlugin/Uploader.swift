@@ -143,15 +143,15 @@ import MobileCoreServices
 
     private func createMultipartFile(withParameters params: [String: String], filePath: String, mimeType: String, boundary: String) throws -> URL {
         let tempDir = FileManager.default.temporaryDirectory
-        let tempFileUrl = tempDir.appendingPathComponent(UUID().uuidString)
+        let tempFileUrl = tempDir.appendingPathComponent(UUID().uuidString + ".tmp")
         
-        let dataBody = createDataBody(withParameters: params, filePath: filePath, mimeType: mimeType, boundary: boundary)
+        let dataBody = try createDataBody(withParameters: params, filePath: filePath, mimeType: mimeType, boundary: boundary)
         try dataBody.write(to: tempFileUrl)
         
         return tempFileUrl
     }
 
-    private func createDataBody(withParameters params: [String: String], filePath: String, mimeType: String, boundary: String) -> Data {
+    private func createDataBody(withParameters params: [String: String], filePath: String, mimeType: String, boundary: String) throws -> Data {
         let data = NSMutableData()
 
         for (key, value) in params {
@@ -163,7 +163,10 @@ import MobileCoreServices
         data.append("--\(boundary)\r\n".data(using: .utf8)!)
         data.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(URL(fileURLWithPath: filePath).lastPathComponent)\"\r\n".data(using: .utf8)!)
         data.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
-        data.append(try! Data(contentsOf: URL(fileURLWithPath: filePath)))
+        
+        let fileData = try Data(contentsOf: URL(fileURLWithPath: filePath))
+        data.append(fileData)
+        
         data.append("\r\n".data(using: .utf8)!)
         data.append("--\(boundary)--".data(using: .utf8)!)
 
