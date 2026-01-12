@@ -3,11 +3,13 @@ import Capacitor
 
 @objc(UploaderPlugin)
 public class UploaderPlugin: CAPPlugin, CAPBridgedPlugin {
+    private let pluginVersion: String = "8.0.9"
     public let identifier = "UploaderPlugin"
     public let jsName = "Uploader"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "startUpload", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "removeUpload", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "removeUpload", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getPluginVersion", returnType: CAPPluginReturnPromise)
     ]
     private let implementation = Uploader()
 
@@ -18,9 +20,12 @@ public class UploaderPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     @objc func startUpload(_ call: CAPPluginCall) {
-        guard let filePath = call.getString("filePath"),
-              let serverUrl = call.getString("serverUrl") else {
-            call.reject("Missing required parameters")
+        guard let filePath = call.getString("filePath") else {
+            call.reject("Missing required parameter: filePath")
+            return
+        }
+        guard let serverUrl = call.getString("serverUrl") else {
+            call.reject("Missing required parameter: serverUrl")
             return
         }
 
@@ -58,4 +63,9 @@ public class UploaderPlugin: CAPPlugin, CAPBridgedPlugin {
             }
         }
     }
+
+    @objc func getPluginVersion(_ call: CAPPluginCall) {
+        call.resolve(["version": self.pluginVersion])
+    }
+
 }

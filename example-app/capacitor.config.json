@@ -1,0 +1,10 @@
+{
+  "appId": "app.capgo.uploader",
+  "appName": "Uploader Example",
+  "webDir": "dist",
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": false
+    }
+  }
+}
