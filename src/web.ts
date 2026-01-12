@@ -39,7 +39,7 @@ export class UploaderWeb extends WebPlugin implements UploaderPlugin {
       headers = {},
       method = 'POST',
       parameters = {},
-      uploadType = 'binary',
+      uploadType = 'binary', // Default to binary for consistency across platforms
       fileField = 'file',
     } = options;
     const upload = this.uploads.get(id);
@@ -53,7 +53,8 @@ export class UploaderWeb extends WebPlugin implements UploaderPlugin {
       let body: FormData | File;
 
       if (uploadType === 'multipart') {
-        // For multipart uploads
+        // For multipart/form-data uploads
+        // Encodes the file and parameters as multipart form data
         const formData = new FormData();
         formData.append(fileField, file);
 
@@ -64,6 +65,7 @@ export class UploaderWeb extends WebPlugin implements UploaderPlugin {
         body = formData;
       } else {
         // For binary uploads (default)
+        // Uploads the file as raw binary data in the request body
         body = file;
       }
 

@@ -31,12 +31,15 @@ import MobileCoreServices
             throw NSError(domain: "UploaderPlugin", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid file URL"])
         }
         let mimeType = options["mimeType"] as? String ?? guessMIMEType(from: filePath)
+        // Use explicit uploadType parameter instead of inferring from HTTP method
+        // Default is "binary" for backward compatibility and consistency across platforms
         let uploadType = options["uploadType"] as? String ?? "binary"
         let fileField = options["fileField"] as? String ?? "file"
 
         let task: URLSessionTask
         if uploadType == "multipart" {
-            // For multipart uploads
+            // For multipart/form-data uploads
+            // Encodes the file and parameters as multipart form data
             let boundary = UUID().uuidString
             request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
 
@@ -47,6 +50,7 @@ import MobileCoreServices
             task = self.getUrlSession().uploadTask(with: request, from: dataBody)
         } else {
             // For binary uploads (default)
+            // Uploads the file as raw binary data in the request body
             request.setValue(mimeType, forHTTPHeaderField: "Content-Type")
             task = self.getUrlSession().uploadTask(with: request, fromFile: fileUrl)
         }
