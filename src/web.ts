@@ -33,7 +33,15 @@ export class UploaderWeb extends WebPlugin implements UploaderPlugin {
   }
 
   private async doUpload(id: string, options: uploadOption) {
-    const { filePath, serverUrl, headers = {}, method = 'POST', parameters = {}, uploadType = 'binary', fileField = 'file' } = options;
+    const {
+      filePath,
+      serverUrl,
+      headers = {},
+      method = 'POST',
+      parameters = {},
+      uploadType = 'binary',
+      fileField = 'file',
+    } = options;
     const upload = this.uploads.get(id);
 
     if (!upload) return;
@@ -43,7 +51,7 @@ export class UploaderWeb extends WebPlugin implements UploaderPlugin {
       if (!file) throw new Error('File not found');
 
       let body: FormData | File;
-      
+
       if (uploadType === 'multipart') {
         // For multipart uploads
         const formData = new FormData();
@@ -52,7 +60,7 @@ export class UploaderWeb extends WebPlugin implements UploaderPlugin {
         for (const [key, value] of Object.entries(parameters)) {
           formData.append(key, value);
         }
-        
+
         body = formData;
       } else {
         // For binary uploads (default)
