@@ -178,7 +178,7 @@ public class UploaderPlugin extends Plugin {
             for (Iterator<String> it = object.keys(); it.hasNext(); ) {
                 String key = it.next();
                 String value = object.getString(key);
-                // Only add non-null and non-empty values to avoid null pointer exceptions
+                // Only add non-null and non-empty values to prevent upload service errors
                 if (value != null && !value.isEmpty()) {
                     map.put(key, value);
                 }
