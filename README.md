@@ -30,7 +30,7 @@ npm install @capgo/capacitor-uploader
 npx cap sync
 ```
 
-## Android:
+## Android
 
 Add the following to your `AndroidManifest.xml` file:
 
@@ -40,7 +40,7 @@ Add the following to your `AndroidManifest.xml` file:
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 ```
 
-## Example S3 upload:
+## Example S3 upload
 
 ```typescript
 import { Uploader } from '@capgo/capacitor-uploader';
@@ -75,7 +75,7 @@ async function uploadToS3(filePath: string, presignedUrl: string, fields: Record
 
 ```
 
-### Example upload to a custom server:
+### Example upload to a custom server
 
 ```typescript
 import { Uploader } from '@capgo/capacitor-uploader';
@@ -126,13 +126,12 @@ async function uploadToCustomServer(filePath: string, serverUrl: string) {
 
 // Usage
 const filePath = 'file:///path/to/your/file.jpg';
-
 const serverUrl = 'https://your-custom-server.com/upload';
 uploadToCustomServer(filePath, serverUrl);
 
 ```
 
-### Example with Capacitor Camera preview:
+### Example with Capacitor Camera preview
 
 Documentation for the [Capacitor Camera preview](https://github.com/Cap-go/camera-preview)
 
