@@ -3,7 +3,7 @@ import Capacitor
 
 @objc(UploaderPlugin)
 public class UploaderPlugin: CAPPlugin, CAPBridgedPlugin {
-    private let pluginVersion: String = "8.1.0"
+    private let pluginVersion: String = "8.1.1"
     public let identifier = "UploaderPlugin"
     public let jsName = "Uploader"
     public let pluginMethods: [CAPPluginMethod] = [
