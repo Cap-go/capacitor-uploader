@@ -6,7 +6,7 @@ export class PathHelper {
   }
 
   // Parse the path to extract database, storeName, and key
-  static parseIndexedDBPath(path: string): { database: string, storeName: string, key: string } {
+  static parseIndexedDBPath(path: string): { database: string; storeName: string; key: string } {
     const regex = /^idb:\/\/([^/]+)\/([^/]+)\/(.+)$/;
     const match = path.match(regex);
 

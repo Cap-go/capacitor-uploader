@@ -1,7 +1,7 @@
-import { WebPlugin } from "@capacitor/core";
-import { PathHelper } from "./PathHelper";
+import { WebPlugin } from '@capacitor/core';
 import { openDB } from 'idb';
 
+import { PathHelper } from './PathHelper';
 import type { UploaderPlugin, uploadOption } from './definitions';
 
 export class UploaderWeb extends WebPlugin implements UploaderPlugin {
@@ -136,7 +136,7 @@ export class UploaderWeb extends WebPlugin implements UploaderPlugin {
         type: blob.type,
       });
     } catch (error) {
-      console.error("Error getting file from system:", error);
+      console.error('Error getting file from system:', error);
       return null;
     }
   }
