@@ -35,7 +35,15 @@ export class UploaderWeb extends WebPlugin implements UploaderPlugin {
   }
 
   private async doUpload(id: string, options: uploadOption) {
-    const { filePath, serverUrl, headers = {}, method = 'POST', parameters = {} } = options;
+    const {
+      filePath,
+      serverUrl,
+      headers = {},
+      method = 'POST',
+      parameters = {},
+      uploadType = 'binary', // Default to binary for consistency across platforms
+      fileField = 'file',
+    } = options;
     const upload = this.uploads.get(id);
 
     if (!upload) return;
@@ -44,17 +52,29 @@ export class UploaderWeb extends WebPlugin implements UploaderPlugin {
       const file = await this.getFileFromPath(filePath);
       if (!file) throw new Error('File not found');
 
-      const formData = new FormData();
-      formData.append('file', file);
+      let body: FormData | File;
 
-      for (const [key, value] of Object.entries(parameters)) {
-        formData.append(key, value);
+      if (uploadType === 'multipart') {
+        // For multipart/form-data uploads
+        // Encodes the file and parameters as multipart form data
+        const formData = new FormData();
+        formData.append(fileField, file);
+
+        for (const [key, value] of Object.entries(parameters)) {
+          formData.append(key, value);
+        }
+
+        body = formData;
+      } else {
+        // For binary uploads (default)
+        // Uploads the file as raw binary data in the request body
+        body = file;
       }
 
       const response = await fetch(serverUrl, {
         method,
         headers,
-        body: method === 'PUT' ? file : formData,
+        body,
         signal: upload.controller.signal,
       });
 

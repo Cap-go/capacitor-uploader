@@ -31,22 +31,28 @@ import MobileCoreServices
             throw NSError(domain: "UploaderPlugin", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid file URL"])
         }
         let mimeType = options["mimeType"] as? String ?? guessMIMEType(from: filePath)
+        // Use explicit uploadType parameter instead of inferring from HTTP method
+        // Default is "binary" for backward compatibility and consistency across platforms
+        let uploadType = options["uploadType"] as? String ?? "binary"
+        let fileField = options["fileField"] as? String ?? "file"
 
         let task: URLSessionTask
-        if request.httpMethod == "PUT" {
-            // For S3 presigned URL uploads
-            request.setValue(mimeType, forHTTPHeaderField: "Content-Type")
-            task = self.getUrlSession().uploadTask(with: request, fromFile: fileUrl)
-        } else {
-            // For POST uploads
+        if uploadType == "multipart" {
+            // For multipart/form-data uploads
+            // Encodes the file and parameters as multipart form data
             let boundary = UUID().uuidString
             request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
 
             let parameters = options["parameters"] as? [String: String] ?? [:]
 
-            let dataBody = createDataBody(withParameters: parameters, filePath: filePath, mimeType: mimeType, boundary: boundary)
+            let dataBody = createDataBody(withParameters: parameters, filePath: filePath, mimeType: mimeType, boundary: boundary, fileField: fileField)
 
             task = self.getUrlSession().uploadTask(with: request, from: dataBody)
+        } else {
+            // For binary uploads (default)
+            // Uploads the file as raw binary data in the request body
+            request.setValue(mimeType, forHTTPHeaderField: "Content-Type")
+            task = self.getUrlSession().uploadTask(with: request, fromFile: fileUrl)
         }
 
         task.taskDescription = id
@@ -126,7 +132,7 @@ import MobileCoreServices
         eventHandler?(event)
     }
 
-    private func createDataBody(withParameters params: [String: String], filePath: String, mimeType: String, boundary: String) -> Data {
+    private func createDataBody(withParameters params: [String: String], filePath: String, mimeType: String, boundary: String, fileField: String) -> Data {
         let data = NSMutableData()
 
         for (key, value) in params {
@@ -136,7 +142,7 @@ import MobileCoreServices
         }
 
         data.append("--\(boundary)\r\n".data(using: .utf8)!)
-        data.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(URL(fileURLWithPath: filePath).lastPathComponent)\"\r\n".data(using: .utf8)!)
+        data.append("Content-Disposition: form-data; name=\"\(fileField)\"; filename=\"\(URL(fileURLWithPath: filePath).lastPathComponent)\"\r\n".data(using: .utf8)!)
         data.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
         data.append(try! Data(contentsOf: URL(fileURLWithPath: filePath)))
         data.append("\r\n".data(using: .utf8)!)
