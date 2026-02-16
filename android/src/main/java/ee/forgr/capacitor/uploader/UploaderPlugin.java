@@ -21,7 +21,7 @@ import net.gotev.uploadservice.observer.request.RequestObserverDelegate;
 @CapacitorPlugin(name = "Uploader")
 public class UploaderPlugin extends Plugin {
 
-    private final String pluginVersion = "8.1.5";
+    private final String pluginVersion = "8.1.6";
 
     private Uploader implementation;
 
