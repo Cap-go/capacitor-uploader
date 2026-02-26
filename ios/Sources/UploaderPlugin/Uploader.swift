@@ -8,6 +8,7 @@ import MobileCoreServices
     private var responsesData: [Int: Data] = [:]
     private var tasks: [String: URLSessionTask] = [:]
     private var retries: [String: Int] = [:]
+    private var tempBodyFiles: [String: URL] = [:]
 
     var eventHandler: (([String: Any]) -> Void)?
 
@@ -46,7 +47,12 @@ import MobileCoreServices
 
             let dataBody = createDataBody(withParameters: parameters, filePath: filePath, mimeType: mimeType, boundary: boundary)
 
-            task = self.getUrlSession().uploadTask(with: request, from: dataBody)
+            let tempDir = FileManager.default.temporaryDirectory
+            let tempFile = tempDir.appendingPathComponent("upload-\(id).tmp")
+            try dataBody.write(to: tempFile)
+            tempBodyFiles[id] = tempFile
+
+            task = self.getUrlSession().uploadTask(with: request, fromFile: tempFile)
         }
 
         task.taskDescription = id
@@ -82,6 +88,10 @@ import MobileCoreServices
     }
     public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         guard let id = task.taskDescription else { return }
+
+        if let tempUrl = tempBodyFiles.removeValue(forKey: id) {
+            try? FileManager.default.removeItem(at: tempUrl)
+        }
 
         var payload: [String: Any] = [:]
         if let response = task.response as? HTTPURLResponse {
