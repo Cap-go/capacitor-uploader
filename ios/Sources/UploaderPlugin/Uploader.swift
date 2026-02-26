@@ -89,10 +89,6 @@ import MobileCoreServices
     public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         guard let id = task.taskDescription else { return }
 
-        if let tempUrl = tempBodyFiles.removeValue(forKey: id) {
-            try? FileManager.default.removeItem(at: tempUrl)
-        }
-
         var payload: [String: Any] = [:]
         if let response = task.response as? HTTPURLResponse {
             payload["statusCode"] = response.statusCode
@@ -112,6 +108,9 @@ import MobileCoreServices
             sendEvent(name: "completed", id: id, payload: payload)
         }
 
+        if let tempUrl = tempBodyFiles.removeValue(forKey: id) {
+            try? FileManager.default.removeItem(at: tempUrl)
+        }
         tasks.removeValue(forKey: id)
         retries.removeValue(forKey: id)
     }
