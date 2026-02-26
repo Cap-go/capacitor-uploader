@@ -25,14 +25,19 @@ import MobileCoreServices
         print("startUpload: \(id)")
 
         let config = UploadConfig(filePath: filePath, serverUrl: serverUrl, options: options)
-        uploadConfigs[id] = config
-
-        let task = try createUploadTask(id: id, config: config)
-        tasks[id] = task
-        retries[id] = maxRetries
-        task.resume()
-
-        return id
+        do {
+            let task = try createUploadTask(id: id, config: config)
+            uploadConfigs[id] = config
+            tasks[id] = task
+            retries[id] = maxRetries
+            task.resume()
+            return id
+        } catch {
+            if let tempUrl = tempBodyFiles.removeValue(forKey: id) {
+                try? FileManager.default.removeItem(at: tempUrl)
+            }
+            throw error
+        }
     }
 
     private func createUploadTask(id: String, config: UploadConfig) throws -> URLSessionTask {
@@ -49,7 +54,13 @@ import MobileCoreServices
         }
 
         let filePath = config.filePath
-        guard let fileUrl = URL(string: filePath) else {
+        let fileUrl: URL
+        if let candidateUrl = URL(string: filePath), candidateUrl.isFileURL {
+            fileUrl = candidateUrl
+        } else {
+            fileUrl = URL(fileURLWithPath: filePath)
+        }
+        guard fileUrl.isFileURL else {
             throw NSError(domain: "UploaderPlugin", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid file URL"])
         }
         let mimeType = config.options["mimeType"] as? String ?? guessMIMEType(from: filePath)
@@ -66,14 +77,12 @@ import MobileCoreServices
 
             let parameters = config.options["parameters"] as? [String: String] ?? [:]
 
-            let dataBody = createDataBody(withParameters: parameters, filePath: filePath, mimeType: mimeType, boundary: boundary)
-
             if let oldTemp = tempBodyFiles[id] {
                 try? FileManager.default.removeItem(at: oldTemp)
             }
             let tempDir = FileManager.default.temporaryDirectory
             let tempFile = tempDir.appendingPathComponent("upload-\(id).tmp")
-            try dataBody.write(to: tempFile)
+            try writeMultipartBodyToFile(at: tempFile, parameters: parameters, fileUrl: fileUrl, mimeType: mimeType, boundary: boundary)
             tempBodyFiles[id] = tempFile
 
             task = self.getUrlSession().uploadTask(with: request, fromFile: tempFile)
@@ -88,6 +97,11 @@ import MobileCoreServices
         if let task = tasks[id] {
             task.cancel()
             tasks.removeValue(forKey: id)
+            retries.removeValue(forKey: id)
+            uploadConfigs.removeValue(forKey: id)
+            if let tempUrl = tempBodyFiles.removeValue(forKey: id) {
+                try? FileManager.default.removeItem(at: tempUrl)
+            }
         }
     }
 
@@ -115,7 +129,8 @@ import MobileCoreServices
         }
 
         if let error = error {
-            if let retriesLeft = retries[id], retriesLeft > 0, let config = uploadConfigs[id] {
+            let isCancelled = (error as NSError).code == NSURLErrorCancelled
+            if !isCancelled, let retriesLeft = retries[id], retriesLeft > 0, let config = uploadConfigs[id] {
                 let newRetries = retriesLeft - 1
                 retries[id] = newRetries
                 print("Retrying upload (retries left: \(newRetries))")
@@ -163,25 +178,36 @@ import MobileCoreServices
         eventHandler?(event)
     }
 
-    private func createDataBody(withParameters params: [String: String], filePath: String, mimeType: String, boundary: String) -> Data {
-        let data = NSMutableData()
+    // Writes multipart/form-data body directly to a file, streaming the file content in chunks
+    private func writeMultipartBodyToFile(at tempFile: URL, parameters: [String: String], fileUrl: URL, mimeType: String, boundary: String) throws {
+        FileManager.default.createFile(atPath: tempFile.path, contents: nil)
+        let writeHandle = try FileHandle(forWritingTo: tempFile)
+        defer { try? writeHandle.close() }
 
-        for (key, value) in params {
-            data.append("--\(boundary)\r\n".data(using: .utf8)!)
-            data.append("Content-Disposition: form-data; name=\"\(key)\"\r\n\r\n".data(using: .utf8)!)
-            data.append("\(value)\r\n".data(using: .utf8)!)
+        func write(_ string: String) throws {
+            try writeHandle.write(contentsOf: string.data(using: .utf8)!)
         }
 
-        data.append("--\(boundary)\r\n".data(using: .utf8)!)
-        data.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(URL(fileURLWithPath: filePath).lastPathComponent)\"\r\n".data(using: .utf8)!)
-        data.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
-        data.append(try! Data(contentsOf: URL(fileURLWithPath: filePath)))
-        data.append("\r\n".data(using: .utf8)!)
-        data.append("--\(boundary)--".data(using: .utf8)!)
+        for (key, value) in parameters {
+            try write("--\(boundary)\r\n")
+            try write("Content-Disposition: form-data; name=\"\(key)\"\r\n\r\n")
+            try write("\(value)\r\n")
+        }
 
-        return data as Data
+        try write("--\(boundary)\r\n")
+        try write("Content-Disposition: form-data; name=\"file\"; filename=\"\(fileUrl.lastPathComponent)\"\r\n")
+        try write("Content-Type: \(mimeType)\r\n\r\n")
+
+        let readHandle = try FileHandle(forReadingFrom: fileUrl)
+        defer { try? readHandle.close() }
+        let chunkSize = 64 * 1024
+        while true {
+            guard let chunk = try readHandle.read(upToCount: chunkSize), !chunk.isEmpty else { break }
+            try writeHandle.write(contentsOf: chunk)
+        }
+
+        try write("\r\n--\(boundary)--")
     }
-
 }
 
 extension Uploader: URLSessionDataDelegate {
