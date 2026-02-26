@@ -10,28 +10,49 @@ import MobileCoreServices
     private var retries: [String: Int] = [:]
     private var tempBodyFiles: [String: URL] = [:]
 
+    private struct UploadConfig {
+        let filePath: String
+        let serverUrl: String
+        let options: [String: Any]
+    }
+
+    private var uploadConfigs: [String: UploadConfig] = [:]
+
     var eventHandler: (([String: Any]) -> Void)?
 
     @objc public func startUpload(_ filePath: String, _ serverUrl: String, _ options: [String: Any], maxRetries: Int = 3) async throws -> String {
         let id = UUID().uuidString
         print("startUpload: \(id)")
 
-        guard let url = URL(string: serverUrl) else {
+        let config = UploadConfig(filePath: filePath, serverUrl: serverUrl, options: options)
+        uploadConfigs[id] = config
+
+        let task = try createUploadTask(id: id, config: config)
+        tasks[id] = task
+        retries[id] = maxRetries
+        task.resume()
+
+        return id
+    }
+
+    private func createUploadTask(id: String, config: UploadConfig) throws -> URLSessionTask {
+        guard let url = URL(string: config.serverUrl) else {
             throw NSError(domain: "UploaderPlugin", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
         }
 
         var request = URLRequest(url: url)
-        request.httpMethod = (options["method"] as? String)?.uppercased() ?? "POST"
+        request.httpMethod = (config.options["method"] as? String)?.uppercased() ?? "POST"
 
-        let headers = options["headers"] as? [String: String] ?? [:]
+        let headers = config.options["headers"] as? [String: String] ?? [:]
         for (key, value) in headers {
             request.setValue(value, forHTTPHeaderField: key)
         }
 
+        let filePath = config.filePath
         guard let fileUrl = URL(string: filePath) else {
             throw NSError(domain: "UploaderPlugin", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid file URL"])
         }
-        let mimeType = options["mimeType"] as? String ?? guessMIMEType(from: filePath)
+        let mimeType = config.options["mimeType"] as? String ?? guessMIMEType(from: filePath)
 
         let task: URLSessionTask
         if request.httpMethod == "PUT" {
@@ -43,10 +64,13 @@ import MobileCoreServices
             let boundary = UUID().uuidString
             request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
 
-            let parameters = options["parameters"] as? [String: String] ?? [:]
+            let parameters = config.options["parameters"] as? [String: String] ?? [:]
 
             let dataBody = createDataBody(withParameters: parameters, filePath: filePath, mimeType: mimeType, boundary: boundary)
 
+            if let oldTemp = tempBodyFiles[id] {
+                try? FileManager.default.removeItem(at: oldTemp)
+            }
             let tempDir = FileManager.default.temporaryDirectory
             let tempFile = tempDir.appendingPathComponent("upload-\(id).tmp")
             try dataBody.write(to: tempFile)
@@ -56,11 +80,7 @@ import MobileCoreServices
         }
 
         task.taskDescription = id
-        tasks[id] = task
-        retries[id] = maxRetries
-        task.resume()
-
-        return id
+        return task
     }
 
     @objc public func removeUpload(_ id: String) async throws {
@@ -95,14 +115,21 @@ import MobileCoreServices
         }
 
         if let error = error {
-            if let retriesLeft = retries[id], retriesLeft > 0 {
-                retries[id] = retriesLeft - 1
-                print("Retrying upload (retries left: \(retriesLeft - 1))")
-                task.resume()
-                return
+            if let retriesLeft = retries[id], retriesLeft > 0, let config = uploadConfigs[id] {
+                let newRetries = retriesLeft - 1
+                retries[id] = newRetries
+                print("Retrying upload (retries left: \(newRetries))")
+                do {
+                    let newTask = try createUploadTask(id: id, config: config)
+                    tasks[id] = newTask
+                    newTask.resume()
+                    return
+                } catch {
+                    payload["error"] = error.localizedDescription
+                }
+            } else {
+                payload["error"] = error.localizedDescription
             }
-
-            payload["error"] = error.localizedDescription
             sendEvent(name: "failed", id: id, payload: payload)
         } else {
             sendEvent(name: "completed", id: id, payload: payload)
@@ -113,6 +140,7 @@ import MobileCoreServices
         }
         tasks.removeValue(forKey: id)
         retries.removeValue(forKey: id)
+        uploadConfigs.removeValue(forKey: id)
     }
 
     public func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64, totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
