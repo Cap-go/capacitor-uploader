@@ -64,14 +64,15 @@ import MobileCoreServices
             throw NSError(domain: "UploaderPlugin", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid file URL"])
         }
         let mimeType = config.options["mimeType"] as? String ?? guessMIMEType(from: filePath)
+        // Use explicit uploadType parameter instead of inferring from HTTP method
+        // Default is "binary" for backward compatibility and consistency across platforms
+        let uploadType = config.options["uploadType"] as? String ?? "binary"
+        let fileField = config.options["fileField"] as? String ?? "file"
 
         let task: URLSessionTask
-        if request.httpMethod == "PUT" {
-            // For S3 presigned URL uploads
-            request.setValue(mimeType, forHTTPHeaderField: "Content-Type")
-            task = self.getUrlSession().uploadTask(with: request, fromFile: fileUrl)
-        } else {
-            // For POST uploads
+        if uploadType == "multipart" {
+            // For multipart/form-data uploads
+            // Encodes the file and parameters as multipart form data
             let boundary = UUID().uuidString
             request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
 
@@ -82,10 +83,15 @@ import MobileCoreServices
             }
             let tempDir = FileManager.default.temporaryDirectory
             let tempFile = tempDir.appendingPathComponent("upload-\(id).tmp")
-            try writeMultipartBodyToFile(at: tempFile, parameters: parameters, fileUrl: fileUrl, mimeType: mimeType, boundary: boundary)
+            try writeMultipartBodyToFile(at: tempFile, parameters: parameters, fileUrl: fileUrl, mimeType: mimeType, boundary: boundary, fileField: fileField)
             tempBodyFiles[id] = tempFile
 
             task = self.getUrlSession().uploadTask(with: request, fromFile: tempFile)
+        } else {
+            // For binary uploads (default)
+            // Uploads the file as raw binary data in the request body
+            request.setValue(mimeType, forHTTPHeaderField: "Content-Type")
+            task = self.getUrlSession().uploadTask(with: request, fromFile: fileUrl)
         }
 
         task.taskDescription = id
@@ -179,7 +185,7 @@ import MobileCoreServices
     }
 
     // Writes multipart/form-data body directly to a file, streaming the file content in chunks
-    private func writeMultipartBodyToFile(at tempFile: URL, parameters: [String: String], fileUrl: URL, mimeType: String, boundary: String) throws {
+    private func writeMultipartBodyToFile(at tempFile: URL, parameters: [String: String], fileUrl: URL, mimeType: String, boundary: String, fileField: String) throws {
         FileManager.default.createFile(atPath: tempFile.path, contents: nil)
         let writeHandle = try FileHandle(forWritingTo: tempFile)
         defer { try? writeHandle.close() }
@@ -195,7 +201,7 @@ import MobileCoreServices
         }
 
         try write("--\(boundary)\r\n")
-        try write("Content-Disposition: form-data; name=\"file\"; filename=\"\(fileUrl.lastPathComponent)\"\r\n")
+        try write("Content-Disposition: form-data; name=\"\(fileField)\"; filename=\"\(fileUrl.lastPathComponent)\"\r\n")
         try write("Content-Type: \(mimeType)\r\n\r\n")
 
         let readHandle = try FileHandle(forReadingFrom: fileUrl)
