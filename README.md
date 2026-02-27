@@ -41,6 +41,24 @@ npm install @capgo/capacitor-uploader
 npx cap sync
 ```
 
+## iOS
+
+Add the following to your `Info.plist` file to enable background upload support:
+
+```xml
+<key>UIBackgroundModes</key>
+<array>
+    <string>fetch</string>
+    <string>processing</string>
+</array>
+<key>BGTaskSchedulerPermittedIdentifiers</key>
+<array>
+    <string>CapacitorUploaderBackgroundSession</string>
+</array>
+```
+
+> **Note:** Apple requires that when `UIBackgroundModes` contains `processing`, the `BGTaskSchedulerPermittedIdentifiers` key must also be present with the identifiers of the tasks you register. Without it, App Store submission will be rejected with the error: *"The Info.plist key 'BGTaskSchedulerPermittedIdentifiers' must contain a list of identifiers used to submit and handle tasks when 'UIBackgroundModes' has a value of 'processing'."*
+
 ## Android
 
 Add the following to your `AndroidManifest.xml` file:
