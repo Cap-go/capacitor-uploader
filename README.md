@@ -1,4 +1,7 @@
 # @capgo/capacitor-uploader
+Upload files in the background with progress tracking, resumable uploads, and network-aware handling for Capacitor apps.
+
+
  <a href="https://capgo.app/"><img src='https://raw.githubusercontent.com/Cap-go/capgo/main/assets/capgo_banner.png' alt='Capgo - Instant updates for capacitor'/></a>
  
 <div align="center">
@@ -12,9 +15,24 @@ This plugin provides a flexible way to upload natively files to various servers,
 
 Can be used in combination with the [Capacitor Camera preview](https://github.com/Cap-go/camera-preview) To upload file in reliable manner instead of reading them in buffer of webview and then upload in JS.
 
+On the web, file paths support IndexedDB (IDB) semantic paths using the following format:  
+`idb://[database-name]/[collection-name]/[key]`  
+This allows seamless integration with IndexedDB for storing and retrieving files.
+
 ## Documentation
 
 The most complete doc is available here: https://capgo.app/docs/plugins/uploader/
+
+## Compatibility
+
+| Plugin version | Capacitor compatibility | Maintained |
+| -------------- | ----------------------- | ---------- |
+| v8.\*.\*       | v8.\*.\*                | ✅          |
+| v7.\*.\*       | v7.\*.\*                | On demand   |
+| v6.\*.\*       | v6.\*.\*                | ❌          |
+| v5.\*.\*       | v5.\*.\*                | ❌          |
+
+> **Note:** The major version of this plugin follows the major version of Capacitor. Use the version that matches your Capacitor installation (e.g., plugin v8 for Capacitor 8). Only the latest major version is actively maintained.
 
 ## Install
 
@@ -23,7 +41,7 @@ npm install @capgo/capacitor-uploader
 npx cap sync
 ```
 
-## Android:
+## Android
 
 Add the following to your `AndroidManifest.xml` file:
 
@@ -33,10 +51,7 @@ Add the following to your `AndroidManifest.xml` file:
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 ```
 
-## Example S3 upload:
-
-
-## Example S3 upload:
+## Example S3 upload
 
 ```typescript
 import { Uploader } from '@capgo/capacitor-uploader';
@@ -71,7 +86,7 @@ async function uploadToS3(filePath: string, presignedUrl: string, fields: Record
 
 ```
 
-### Example upload to a custom server:
+### Example upload to a custom server
 
 ```typescript
 import { Uploader } from '@capgo/capacitor-uploader';
@@ -127,7 +142,7 @@ uploadToCustomServer(filePath, serverUrl);
 
 ```
 
-### Example with Capacitor Camera preview:
+### Example with Capacitor Camera preview
 
 Documentation for the [Capacitor Camera preview](https://github.com/Cap-go/camera-preview)
 
