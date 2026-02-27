@@ -3,7 +3,9 @@ package ee.forgr.capacitor.uploader;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Build;
+import android.util.Log;
 import android.webkit.MimeTypeMap;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -13,10 +15,13 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.UUID;
 import net.gotev.uploadservice.data.UploadInfo;
 import net.gotev.uploadservice.network.ServerResponse;
 import net.gotev.uploadservice.observer.request.RequestObserver;
 import net.gotev.uploadservice.observer.request.RequestObserverDelegate;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 @CapacitorPlugin(name = "Uploader")
 public class UploaderPlugin extends Plugin {
@@ -28,6 +33,51 @@ public class UploaderPlugin extends Plugin {
     private static final String CHANNEL_ID = "ee.forgr.capacitor.uploader.notification_channel_id";
     private static final String CHANNEL_NAME = "Uploader Notifications";
     private static final String CHANNEL_DESCRIPTION = "Notifications for file uploads";
+
+    private static final String PREFS_NAME = "CapacitorUploaderPrefs";
+    private static final String PENDING_EVENTS_KEY = "pending_events";
+    private static final String TAG = "UploaderPlugin";
+
+    private void saveEventToPrefs(String eventId, JSObject event) {
+        SharedPreferences prefs = getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        String existingJson = prefs.getString(PENDING_EVENTS_KEY, "{}");
+        try {
+            JSONObject pendingEvents = new JSONObject(existingJson);
+            pendingEvents.put(eventId, new JSONObject(event.toString()));
+            prefs.edit().putString(PENDING_EVENTS_KEY, pendingEvents.toString()).apply();
+        } catch (JSONException e) {
+            Log.e(TAG, "Failed to persist upload event", e);
+        }
+    }
+
+    private void removeEventFromPrefs(String eventId) {
+        SharedPreferences prefs = getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        String existingJson = prefs.getString(PENDING_EVENTS_KEY, "{}");
+        try {
+            JSONObject pendingEvents = new JSONObject(existingJson);
+            pendingEvents.remove(eventId);
+            prefs.edit().putString(PENDING_EVENTS_KEY, pendingEvents.toString()).apply();
+        } catch (JSONException e) {
+            Log.e(TAG, "Failed to remove upload event from prefs", e);
+        }
+    }
+
+    private void replayPendingEvents() {
+        SharedPreferences prefs = getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        String existingJson = prefs.getString(PENDING_EVENTS_KEY, "{}");
+        try {
+            JSONObject pendingEvents = new JSONObject(existingJson);
+            Iterator<String> keys = pendingEvents.keys();
+            while (keys.hasNext()) {
+                String eventId = keys.next();
+                JSONObject eventJson = pendingEvents.getJSONObject(eventId);
+                JSObject event = JSObject.fromJSONObject(eventJson);
+                notifyListeners("events", event);
+            }
+        } catch (JSONException e) {
+            Log.e(TAG, "Failed to replay pending upload events", e);
+        }
+    }
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -68,6 +118,9 @@ public class UploaderPlugin extends Plugin {
                     payload.put("statusCode", serverResponse.getCode());
                     event.put("payload", payload);
                     event.put("id", uploadInfo.getUploadId());
+                    String eventId = UUID.randomUUID().toString();
+                    event.put("eventId", eventId);
+                    saveEventToPrefs(eventId, event);
                     notifyListeners("events", event);
                 }
 
@@ -79,6 +132,9 @@ public class UploaderPlugin extends Plugin {
                     payload.put("error", exception.getMessage());
                     event.put("payload", payload);
                     event.put("id", uploadInfo.getUploadId());
+                    String eventId = UUID.randomUUID().toString();
+                    event.put("eventId", eventId);
+                    saveEventToPrefs(eventId, event);
                     notifyListeners("events", event);
                 }
 
@@ -92,12 +148,13 @@ public class UploaderPlugin extends Plugin {
 
                 @Override
                 public void onCompletedWhileNotObserving() {
-                    // Handle completion while not observing if needed
+                    replayPendingEvents();
                 }
             }
         );
 
         implementation = new Uploader(getContext().getApplicationContext());
+        replayPendingEvents();
     }
 
     public static String getMimeType(String url) {
@@ -196,6 +253,17 @@ public class UploaderPlugin extends Plugin {
             }
         }
         return map;
+    }
+
+    @PluginMethod
+    public void acknowledgeEvent(PluginCall call) {
+        String eventId = call.getString("eventId");
+        if (eventId == null || eventId.isEmpty()) {
+            call.reject("Missing required parameter: eventId");
+            return;
+        }
+        removeEventFromPrefs(eventId);
+        call.resolve();
     }
 
     @PluginMethod

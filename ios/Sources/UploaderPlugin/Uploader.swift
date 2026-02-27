@@ -20,6 +20,25 @@ import MobileCoreServices
 
     var eventHandler: (([String: Any]) -> Void)?
 
+    private let pendingEventsKey = "CapacitorUploaderPendingEvents"
+
+    private func savePendingEvent(eventId: String, event: [String: Any]) {
+        var pending = UserDefaults.standard.dictionary(forKey: pendingEventsKey) ?? [:]
+        pending[eventId] = event
+        UserDefaults.standard.set(pending, forKey: pendingEventsKey)
+    }
+
+    public func acknowledgeEvent(eventId: String) {
+        var pending = UserDefaults.standard.dictionary(forKey: pendingEventsKey) ?? [:]
+        pending.removeValue(forKey: eventId)
+        UserDefaults.standard.set(pending, forKey: pendingEventsKey)
+    }
+
+    public func getPendingEvents() -> [[String: Any]] {
+        let pending = UserDefaults.standard.dictionary(forKey: pendingEventsKey) ?? [:]
+        return pending.values.compactMap { $0 as? [String: Any] }
+    }
+
     @objc public func startUpload(_ filePath: String, _ serverUrl: String, _ options: [String: Any], maxRetries: Int = 3) async throws -> String {
         let id = UUID().uuidString
         print("startUpload: \(id)")
@@ -175,6 +194,11 @@ import MobileCoreServices
             "id": id,
             "payload": payload
         ]
+        if name == "completed" || name == "failed" {
+            let eventId = UUID().uuidString
+            event["eventId"] = eventId
+            savePendingEvent(eventId: eventId, event: event)
+        }
         eventHandler?(event)
     }
 
