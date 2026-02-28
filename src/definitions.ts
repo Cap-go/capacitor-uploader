@@ -153,6 +153,16 @@ export interface UploadEvent {
    * @since 0.0.1
    */
   id: string;
+
+  /**
+   * Unique identifier for this specific event instance.
+   * Only present on 'completed' and 'failed' events.
+   * Used with acknowledgeEvent() to confirm receipt and remove the event from the plugin cache.
+   * Progress ('uploading') events do not have an eventId and are not persisted.
+   *
+   * @since 0.0.2
+   */
+  eventId?: string;
 }
 
 /**
@@ -233,6 +243,34 @@ export interface UploaderPlugin {
    * ```
    */
   addListener(eventName: 'events', listenerFunc: (state: UploadEvent) => void): Promise<PluginListenerHandle>;
+
+  /**
+   * Acknowledge receipt of an upload event and remove it from the plugin cache.
+   *
+   * Completed and failed events are stored in the plugin's persistent cache so they can be
+   * re-delivered if the app is closed or backgrounded before the event is processed.
+   * Call this method after successfully handling a 'completed' or 'failed' event to prevent
+   * it from being re-broadcast the next time the plugin initialises.
+   *
+   * Progress ('uploading') events do not have an eventId and do not need to be acknowledged.
+   *
+   * @param options - Object containing the eventId to acknowledge
+   * @returns Promise that resolves when the event has been removed from the cache
+   * @since 0.0.2
+   * @example
+   * ```typescript
+   * const listener = await Uploader.addListener('events', async (event) => {
+   *   if (event.name === 'completed' || event.name === 'failed') {
+   *     // Process the event first, then acknowledge it
+   *     handleUploadResult(event);
+   *     if (event.eventId) {
+   *       await Uploader.acknowledgeEvent({ eventId: event.eventId });
+   *     }
+   *   }
+   * });
+   * ```
+   */
+  acknowledgeEvent(options: { eventId: string }): Promise<void>;
 
   /**
    * Get the native Capacitor plugin version.
