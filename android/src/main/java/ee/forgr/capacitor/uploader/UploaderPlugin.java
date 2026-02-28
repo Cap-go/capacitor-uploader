@@ -4,9 +4,11 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
+import com.getcapacitor.Bridge;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -183,12 +185,17 @@ public class UploaderPlugin extends Plugin {
         // Convert Capacitor web-accessible URLs to local file paths.
         // Capacitor plugins (e.g., video-recorder) may provide file URLs using the web-accessible
         // scheme like "http://localhost/_capacitor_file_/storage/emulated/0/...".
-        // getBridge().getLocalUrl() converts these to actual file system paths that can be used
-        // with native Android APIs. For already-local paths (file:// or absolute paths),
-        // getLocalUrl() returns null, so we safely fall back to the original path.
-        String localFilePath = getBridge().getLocalUrl(filePath);
-        if (localFilePath == null) {
-            localFilePath = filePath;
+        // We extract the actual file system path by stripping the CAPACITOR_FILE_START prefix.
+        // For already-local paths (file:// or absolute paths), we use them as-is.
+        String localFilePath = filePath;
+        try {
+            Uri uri = Uri.parse(filePath);
+            String path = uri.getPath();
+            if (path != null && path.startsWith(Bridge.CAPACITOR_FILE_START)) {
+                localFilePath = path.replace(Bridge.CAPACITOR_FILE_START, "");
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Could not parse filePath as URI, using original value: " + filePath);
         }
 
         JSObject headersObj = call.getObject("headers", new JSObject());
