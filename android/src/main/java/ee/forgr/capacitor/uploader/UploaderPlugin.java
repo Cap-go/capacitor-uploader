@@ -123,6 +123,18 @@ public class UploaderPlugin extends Plugin {
             return;
         }
 
+        // Convert Capacitor web-accessible URLs to local file paths.
+        // Capacitor plugins (e.g., video-recorder) may provide file URLs using the web-accessible
+        // scheme like "http://localhost/_capacitor_file_/storage/emulated/0/...".
+        // getBridge().getLocalUrl() returns the local server base URL (e.g., "http://localhost").
+        // For web-accessible paths, we strip the prefix to get the actual file system path.
+        String localFilePath = filePath;
+        String localServerUrl = getBridge().getLocalUrl();
+        String capacitorFilePrefix = localServerUrl + "/_capacitor_file_";
+        if (filePath.startsWith(capacitorFilePrefix)) {
+            localFilePath = filePath.substring(capacitorFilePrefix.length());
+        }
+
         JSObject headersObj = call.getObject("headers", new JSObject());
         JSObject parametersObj = call.getObject("parameters", new JSObject());
         String httpMethod = call.getString("method", "POST");
@@ -135,10 +147,10 @@ public class UploaderPlugin extends Plugin {
         Map<String, String> parameters = JSObjectToMap(parametersObj);
 
         try {
-            String mimeType = call.getString("mimeType", getMimeType(filePath));
+            String mimeType = call.getString("mimeType", getMimeType(localFilePath));
 
             String id = implementation.startUpload(
-                filePath,
+                localFilePath,
                 serverUrl,
                 headers,
                 parameters,
@@ -177,7 +189,11 @@ public class UploaderPlugin extends Plugin {
         if (object != null) {
             for (Iterator<String> it = object.keys(); it.hasNext(); ) {
                 String key = it.next();
-                map.put(key, object.getString(key));
+                String value = object.getString(key);
+                // Only add non-null and non-empty values to prevent upload service errors
+                if (value != null && !value.isEmpty()) {
+                    map.put(key, value);
+                }
             }
         }
         return map;
