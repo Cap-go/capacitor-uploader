@@ -199,6 +199,7 @@ Documentation for the [Capacitor Camera preview](https://github.com/Cap-go/camer
 * [`startUpload(...)`](#startupload)
 * [`removeUpload(...)`](#removeupload)
 * [`addListener('events', ...)`](#addlistenerevents-)
+* [`acknowledgeEvent(...)`](#acknowledgeevent)
 * [`getPluginVersion()`](#getpluginversion)
 * [Interfaces](#interfaces)
 
@@ -275,6 +276,30 @@ Events are fired for:
 --------------------
 
 
+### acknowledgeEvent(...)
+
+```typescript
+acknowledgeEvent(options: { eventId: string; }) => Promise<void>
+```
+
+Acknowledge receipt of an upload event and remove it from the plugin cache.
+
+Completed and failed events are stored in the plugin's persistent cache so they can be
+re-delivered if the app is closed or backgrounded before the event is processed.
+Call this method after successfully handling a 'completed' or 'failed' event to prevent
+it from being re-broadcast the next time the plugin initialises.
+
+Progress ('uploading') events do not have an eventId and do not need to be acknowledged.
+
+| Param         | Type                              | Description                                    |
+| ------------- | --------------------------------- | ---------------------------------------------- |
+| **`options`** | <code>{ eventId: string; }</code> | - Object containing the eventId to acknowledge |
+
+**Since:** 0.0.2
+
+--------------------
+
+
 ### getPluginVersion()
 
 ```typescript
@@ -322,11 +347,12 @@ Configuration options for uploading a file.
 
 Event emitted during the upload lifecycle.
 
-| Prop          | Type                                                                    | Description                                                                                                                                                | Since |
-| ------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| **`name`**    | <code>'uploading' \| 'completed' \| 'failed'</code>                     | The current status of the upload. - 'uploading': Upload is in progress - 'completed': Upload finished successfully - 'failed': Upload encountered an error | 0.0.1 |
-| **`payload`** | <code>{ percent?: number; error?: string; statusCode?: number; }</code> | Additional data about the upload event.                                                                                                                    | 0.0.1 |
-| **`id`**      | <code>string</code>                                                     | Unique identifier for this upload task.                                                                                                                    | 0.0.1 |
+| Prop          | Type                                                                    | Description                                                                                                                                                                                                                                                                  | Since |
+| ------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| **`name`**    | <code>'uploading' \| 'completed' \| 'failed'</code>                     | The current status of the upload. - 'uploading': Upload is in progress - 'completed': Upload finished successfully - 'failed': Upload encountered an error                                                                                                                   | 0.0.1 |
+| **`payload`** | <code>{ percent?: number; error?: string; statusCode?: number; }</code> | Additional data about the upload event.                                                                                                                                                                                                                                      | 0.0.1 |
+| **`id`**      | <code>string</code>                                                     | Unique identifier for this upload task.                                                                                                                                                                                                                                      | 0.0.1 |
+| **`eventId`** | <code>string</code>                                                     | Unique identifier for this specific event instance. Only present on 'completed' and 'failed' events. Used with acknowledgeEvent() to confirm receipt and remove the event from the plugin cache. Progress ('uploading') events do not have an eventId and are not persisted. | 0.0.2 |
 
 </docgen-api>
 

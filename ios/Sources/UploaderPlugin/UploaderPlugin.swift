@@ -9,13 +9,17 @@ public class UploaderPlugin: CAPPlugin, CAPBridgedPlugin {
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "startUpload", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "removeUpload", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "getPluginVersion", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "getPluginVersion", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "acknowledgeEvent", returnType: CAPPluginReturnPromise)
     ]
     private let implementation = Uploader()
 
     override public func load() {
         implementation.eventHandler = { [weak self] event in
             self?.notifyListeners("events", data: event)
+        }
+        for event in implementation.getPendingEvents() {
+            notifyListeners("events", data: event)
         }
     }
 
@@ -62,6 +66,15 @@ public class UploaderPlugin: CAPPlugin, CAPBridgedPlugin {
                 call.reject("Failed to remove upload: \(error.localizedDescription)")
             }
         }
+    }
+
+    @objc func acknowledgeEvent(_ call: CAPPluginCall) {
+        guard let eventId = call.getString("eventId") else {
+            call.reject("Missing required parameter: eventId")
+            return
+        }
+        implementation.acknowledgeEvent(eventId: eventId)
+        call.resolve()
     }
 
     @objc func getPluginVersion(_ call: CAPPluginCall) {

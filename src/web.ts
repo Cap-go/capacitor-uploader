@@ -2,10 +2,11 @@ import { WebPlugin } from '@capacitor/core';
 import { openDB } from 'idb';
 
 import { PathHelper } from './PathHelper';
-import type { UploaderPlugin, uploadOption } from './definitions';
+import type { UploaderPlugin, UploadEvent, uploadOption } from './definitions';
 
 export class UploaderWeb extends WebPlugin implements UploaderPlugin {
   private uploads: Map<string, { controller: AbortController; retries: number }> = new Map();
+  private pendingEvents: Map<string, UploadEvent> = new Map();
 
   async startUpload(options: uploadOption): Promise<{ id: string }> {
     console.log('startUpload', options);
@@ -60,11 +61,15 @@ export class UploaderWeb extends WebPlugin implements UploaderPlugin {
 
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-      this.notifyListeners('events', {
+      const eventId = crypto.randomUUID();
+      const completedEvent: UploadEvent = {
         name: 'completed',
         id,
+        eventId,
         payload: { statusCode: response.status },
-      });
+      };
+      this.pendingEvents.set(eventId, completedEvent);
+      this.notifyListeners('events', completedEvent);
 
       this.uploads.delete(id);
     } catch (error) {
@@ -75,11 +80,15 @@ export class UploaderWeb extends WebPlugin implements UploaderPlugin {
         console.log(`Retrying upload (retries left: ${upload.retries})`);
         setTimeout(() => this.doUpload(id, options), 1000);
       } else {
-        this.notifyListeners('events', {
+        const eventId = crypto.randomUUID();
+        const failedEvent: UploadEvent = {
           name: 'failed',
           id,
+          eventId,
           payload: { error: (error as Error).message },
-        });
+        };
+        this.pendingEvents.set(eventId, failedEvent);
+        this.notifyListeners('events', failedEvent);
         this.uploads.delete(id);
       }
     }
@@ -139,6 +148,10 @@ export class UploaderWeb extends WebPlugin implements UploaderPlugin {
       console.error('Error getting file from system:', error);
       return null;
     }
+  }
+
+  async acknowledgeEvent(options: { eventId: string }): Promise<void> {
+    this.pendingEvents.delete(options.eventId);
   }
 
   async getPluginVersion(): Promise<{ version: string }> {
