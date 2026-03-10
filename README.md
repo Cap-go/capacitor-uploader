@@ -43,21 +43,9 @@ npx cap sync
 
 ## iOS
 
-Add the following to your `Info.plist` file to enable background upload support:
+This plugin uses a background `URLSession` to handle uploads. No special `UIBackgroundModes` entry is required for background uploads to continue while the app is suspended — the OS manages them natively.
 
-```xml
-<key>UIBackgroundModes</key>
-<array>
-    <string>fetch</string>
-    <string>processing</string>
-</array>
-<key>BGTaskSchedulerPermittedIdentifiers</key>
-<array>
-    <string>CapacitorUploaderBackgroundSession</string>
-</array>
-```
-
-> **Note:** Apple requires that when `UIBackgroundModes` contains `processing`, the `BGTaskSchedulerPermittedIdentifiers` key must also be present with the identifiers of the tasks you register. Without it, App Store submission will be rejected with the error: *"The Info.plist key 'BGTaskSchedulerPermittedIdentifiers' must contain a list of identifiers used to submit and handle tasks when 'UIBackgroundModes' has a value of 'processing'."*
+> **Important:** Do **not** add `processing` to `UIBackgroundModes` and do **not** add `BGTaskSchedulerPermittedIdentifiers` to your `Info.plist`. Those keys are for `BGTaskScheduler` background tasks, which this plugin does not use. Adding `processing` will cause your App Store submission to be rejected with: *"The Info.plist key 'BGTaskSchedulerPermittedIdentifiers' must contain a list of identifiers..."*
 
 ## Android
 
