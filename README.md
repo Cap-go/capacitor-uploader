@@ -51,6 +51,23 @@ Add the following to your `AndroidManifest.xml` file:
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 ```
 
+## iOS
+
+When you set `UIBackgroundModes` to include `processing`, also add `BGTaskSchedulerPermittedIdentifiers` to your `Info.plist` so the App Store recognizes the background task identifiers used by the uploader's URL session. The background session identifier is `CapacitorUploaderBackgroundSession`.
+
+```xml
+<key>UIBackgroundModes</key>
+<array>
+  <string>processing</string>
+</array>
+<key>BGTaskSchedulerPermittedIdentifiers</key>
+<array>
+  <string>CapacitorUploaderBackgroundSession</string>
+</array>
+```
+
+This mirrors the background session triggered by the uploader plugin and prevents rejections like [#115](https://github.com/Cap-go/capacitor-uploader/issues/115).
+
 ## Example S3 upload
 
 ```typescript
@@ -334,4 +351,3 @@ Event emitted during the upload lifecycle.
 
 For the inspiration and the code on ios: https://github.com/Vydia/react-native-background-upload/tree/master
 For the API definition: https://www.npmjs.com/package/cordova-plugin-background-upload-put-s3
-
