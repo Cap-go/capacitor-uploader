@@ -3,16 +3,16 @@ package ee.forgr.capacitor.uploader;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
-import android.os.Build;
 import android.net.Uri;
+import android.os.Build;
 import android.webkit.MimeTypeMap;
+import com.getcapacitor.Bridge;
+import com.getcapacitor.FileUtils;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
-import com.getcapacitor.FileUtils;
-import com.getcapacitor.Bridge;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -168,11 +168,16 @@ public class UploaderPlugin extends Plugin {
         }
 
         Uri uri = Uri.parse(filePath);
+        String scheme = uri.getScheme();
 
-        if ("content".equalsIgnoreCase(uri.getScheme()) || "file".equalsIgnoreCase(uri.getScheme())) {
+        if ("content".equalsIgnoreCase(scheme) || "file".equalsIgnoreCase(scheme)) {
             String localPath = FileUtils.getFileUrlForUri(getContext(), uri);
             if (localPath != null && !localPath.isEmpty()) {
                 return localPath;
+            }
+
+            if ("content".equalsIgnoreCase(scheme)) {
+                throw new IllegalArgumentException("Unable to resolve content URI: " + filePath);
             }
         }
 
