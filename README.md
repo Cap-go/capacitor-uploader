@@ -53,18 +53,9 @@ Add the following to your `AndroidManifest.xml` file:
 
 ## iOS
 
-When you set `UIBackgroundModes` to include `processing`, also add `BGTaskSchedulerPermittedIdentifiers` to your `Info.plist` so the App Store recognizes the background task identifiers used by the uploader's URL session. The background session identifier is `CapacitorUploaderBackgroundSession`.
+The uploader uses a background `URLSession` on iOS. You do not need to add `UIBackgroundModes` or `BGTaskSchedulerPermittedIdentifiers` for the uploader itself. Only add those keys if your app uses `BGTaskScheduler` for something else.
 
-```xml
-<key>UIBackgroundModes</key>
-<array>
-  <string>processing</string>
-</array>
-<key>BGTaskSchedulerPermittedIdentifiers</key>
-<array>
-  <string>CapacitorUploaderBackgroundSession</string>
-</array>
-```
+The background session identifier is `CapacitorUploaderBackgroundSession`.
 
 This mirrors the background session triggered by the uploader plugin and prevents rejections like [#115](https://github.com/Cap-go/capacitor-uploader/issues/115).
 

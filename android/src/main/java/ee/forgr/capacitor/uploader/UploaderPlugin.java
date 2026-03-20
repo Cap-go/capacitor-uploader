@@ -4,12 +4,15 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.os.Build;
+import android.net.Uri;
 import android.webkit.MimeTypeMap;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.getcapacitor.FileUtils;
+import com.getcapacitor.Bridge;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -123,16 +126,7 @@ public class UploaderPlugin extends Plugin {
             return;
         }
 
-        // Convert Capacitor web-accessible URLs to local file paths.
-        // Capacitor plugins (e.g., video-recorder) may provide file URLs using the web-accessible
-        // scheme like "http://localhost/_capacitor_file_/storage/emulated/0/...".
-        // getBridge().getLocalUrl() converts these to actual file system paths that can be used
-        // with native Android APIs. For already-local paths (file:// or absolute paths),
-        // getLocalUrl() returns null, so we safely fall back to the original path.
-        String localFilePath = getBridge().getLocalUrl(filePath);
-        if (localFilePath == null) {
-            localFilePath = filePath;
-        }
+        String localFilePath = resolveLocalFilePath(filePath);
 
         JSObject headersObj = call.getObject("headers", new JSObject());
         JSObject parametersObj = call.getObject("parameters", new JSObject());
@@ -166,6 +160,32 @@ public class UploaderPlugin extends Plugin {
         } catch (Exception e) {
             call.reject(e.getMessage());
         }
+    }
+
+    private String resolveLocalFilePath(String filePath) {
+        if (filePath == null || filePath.isEmpty()) {
+            return filePath;
+        }
+
+        Uri uri = Uri.parse(filePath);
+
+        if ("content".equalsIgnoreCase(uri.getScheme()) || "file".equalsIgnoreCase(uri.getScheme())) {
+            String localPath = FileUtils.getFileUrlForUri(getContext(), uri);
+            if (localPath != null && !localPath.isEmpty()) {
+                return localPath;
+            }
+        }
+
+        String path = uri.getPath();
+        if (path == null || path.isEmpty()) {
+            path = filePath;
+        }
+
+        if (path.startsWith(Bridge.CAPACITOR_FILE_START)) {
+            path = path.replace(Bridge.CAPACITOR_FILE_START, "");
+        }
+
+        return path;
     }
 
     @PluginMethod
