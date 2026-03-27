@@ -3,8 +3,10 @@ package ee.forgr.capacitor.uploader;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.net.Uri;
 import android.os.Build;
 import android.webkit.MimeTypeMap;
+import com.getcapacitor.Bridge;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -123,16 +125,9 @@ public class UploaderPlugin extends Plugin {
             return;
         }
 
-        // Convert Capacitor web-accessible URLs to local file paths.
-        // Capacitor plugins (e.g., video-recorder) may provide file URLs using the web-accessible
-        // scheme like "http://localhost/_capacitor_file_/storage/emulated/0/...".
-        // getBridge().getLocalUrl() converts these to actual file system paths that can be used
-        // with native Android APIs. For already-local paths (file:// or absolute paths),
-        // getLocalUrl() returns null, so we safely fall back to the original path.
-        String localFilePath = getBridge().getLocalUrl(filePath);
-        if (localFilePath == null) {
-            localFilePath = filePath;
-        }
+        // Convert Capacitor web-accessible URLs to paths native code can open.
+        // Capacitor 8+ removed Bridge.getLocalUrl(String); mirror AndroidProtocolHandler logic.
+        String localFilePath = resolveCapacitorPath(filePath);
 
         JSObject headersObj = call.getObject("headers", new JSObject());
         JSObject parametersObj = call.getObject("parameters", new JSObject());
@@ -181,6 +176,35 @@ public class UploaderPlugin extends Plugin {
         } catch (Exception e) {
             call.reject(e.getMessage());
         }
+    }
+
+    /**
+     * Maps WebView URLs (e.g. http(s)://localhost/_capacitor_file_/...) to filesystem or content
+     * paths, matching {@link com.getcapacitor.AndroidProtocolHandler}. Plain absolute paths and
+     * unrecognized URLs are returned unchanged.
+     */
+    private static String resolveCapacitorPath(String filePath) {
+        if (filePath == null || filePath.isEmpty()) {
+            return filePath;
+        }
+        Uri uri = Uri.parse(filePath);
+        String path = uri.getPath();
+        if (path != null) {
+            if (path.startsWith(Bridge.CAPACITOR_FILE_START)) {
+                return path.replace(Bridge.CAPACITOR_FILE_START, "");
+            }
+            if (path.startsWith(Bridge.CAPACITOR_CONTENT_START)) {
+                String baseUrl = uri.getScheme() + "://" + uri.getHost();
+                if (uri.getPort() != -1) {
+                    baseUrl += ":" + uri.getPort();
+                }
+                return filePath.replace(baseUrl + Bridge.CAPACITOR_CONTENT_START, "content:/");
+            }
+        }
+        if ("file".equalsIgnoreCase(uri.getScheme()) && uri.getPath() != null) {
+            return uri.getPath();
+        }
+        return filePath;
     }
 
     private Map<String, String> JSObjectToMap(JSObject object) {
