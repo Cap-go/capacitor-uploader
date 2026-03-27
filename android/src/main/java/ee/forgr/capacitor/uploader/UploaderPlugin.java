@@ -191,14 +191,19 @@ public class UploaderPlugin extends Plugin {
         String path = uri.getPath();
         if (path != null) {
             if (path.startsWith(Bridge.CAPACITOR_FILE_START)) {
-                return path.replace(Bridge.CAPACITOR_FILE_START, "");
+                return path.substring(Bridge.CAPACITOR_FILE_START.length());
             }
             if (path.startsWith(Bridge.CAPACITOR_CONTENT_START)) {
-                String baseUrl = uri.getScheme() + "://" + uri.getHost();
-                if (uri.getPort() != -1) {
-                    baseUrl += ":" + uri.getPort();
+                String scheme = uri.getScheme();
+                String host = uri.getHost();
+                if (scheme != null && host != null) {
+                    String baseUrl = scheme + "://" + host;
+                    if (uri.getPort() != -1) {
+                        baseUrl += ":" + uri.getPort();
+                    }
+                    return filePath.replace(baseUrl + Bridge.CAPACITOR_CONTENT_START, "content:/");
                 }
-                return filePath.replace(baseUrl + Bridge.CAPACITOR_CONTENT_START, "content:/");
+                return filePath.replace(Bridge.CAPACITOR_CONTENT_START, "content:/");
             }
         }
         if ("file".equalsIgnoreCase(uri.getScheme()) && uri.getPath() != null) {
