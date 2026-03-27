@@ -142,7 +142,7 @@ public class Uploader {
 
     private String getFileNameFromUri(Uri uri) {
         String result = null;
-        if (uri.getScheme().equals("content")) {
+        if ("content".equals(uri.getScheme())) {
             try (Cursor cursor = context.getContentResolver().query(uri, null, null, null, null)) {
                 if (cursor != null && cursor.moveToFirst()) {
                     int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
@@ -155,10 +155,10 @@ public class Uploader {
             }
         }
         if (result == null) {
-            result = uri.getPath();
-            int cut = result.lastIndexOf('/');
-            if (cut != -1) {
-                result = result.substring(cut + 1);
+            String path = uri.getPath();
+            if (path != null) {
+                int cut = path.lastIndexOf('/');
+                result = cut != -1 ? path.substring(cut + 1) : path;
             }
         }
         return result;

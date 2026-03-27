@@ -3,6 +3,7 @@ package ee.forgr.capacitor.uploader;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.net.Uri;
 import android.os.Build;
 import android.webkit.MimeTypeMap;
 import com.getcapacitor.JSObject;
@@ -20,6 +21,10 @@ import net.gotev.uploadservice.observer.request.RequestObserverDelegate;
 
 @CapacitorPlugin(name = "Uploader")
 public class UploaderPlugin extends Plugin {
+
+    private static final String CAPACITOR_FILE_PATH_PREFIX = "/_capacitor_file_";
+
+    private static final String CAPACITOR_CONTENT_PATH_PREFIX = "/_capacitor_content_";
 
     private final String pluginVersion = "8.1.11";
 
@@ -123,16 +128,9 @@ public class UploaderPlugin extends Plugin {
             return;
         }
 
-        // Convert Capacitor web-accessible URLs to local file paths.
-        // Capacitor plugins (e.g., video-recorder) may provide file URLs using the web-accessible
-        // scheme like "http://localhost/_capacitor_file_/storage/emulated/0/...".
-        // getBridge().getLocalUrl() converts these to actual file system paths that can be used
-        // with native Android APIs. For already-local paths (file:// or absolute paths),
-        // getLocalUrl() returns null, so we safely fall back to the original path.
-        String localFilePath = getBridge().getLocalUrl(filePath);
-        if (localFilePath == null) {
-            localFilePath = filePath;
-        }
+        // Convert Capacitor web-accessible URLs to paths native code can open.
+        // Capacitor 8+ removed Bridge.getLocalUrl(String); mirror AndroidProtocolHandler logic.
+        String localFilePath = resolveCapacitorPath(filePath);
 
         JSObject headersObj = call.getObject("headers", new JSObject());
         JSObject parametersObj = call.getObject("parameters", new JSObject());
@@ -181,6 +179,40 @@ public class UploaderPlugin extends Plugin {
         } catch (Exception e) {
             call.reject(e.getMessage());
         }
+    }
+
+    /**
+     * Maps WebView URLs (e.g. http(s)://localhost/_capacitor_file_/...) to filesystem or content
+     * paths, matching {@link com.getcapacitor.AndroidProtocolHandler}. Plain absolute paths and
+     * unrecognized URLs are returned unchanged.
+     */
+    private static String resolveCapacitorPath(String filePath) {
+        if (filePath == null || filePath.isEmpty()) {
+            return filePath;
+        }
+        Uri uri = Uri.parse(filePath);
+        String path = uri.getPath();
+        if (path != null) {
+            if (path.startsWith(CAPACITOR_FILE_PATH_PREFIX)) {
+                return path.substring(CAPACITOR_FILE_PATH_PREFIX.length());
+            }
+            if (path.startsWith(CAPACITOR_CONTENT_PATH_PREFIX)) {
+                String scheme = uri.getScheme();
+                String host = uri.getHost();
+                if (scheme != null && host != null) {
+                    String baseUrl = scheme + "://" + host;
+                    if (uri.getPort() != -1) {
+                        baseUrl += ":" + uri.getPort();
+                    }
+                    return filePath.replace(baseUrl + CAPACITOR_CONTENT_PATH_PREFIX, "content:/");
+                }
+                return filePath.replace(CAPACITOR_CONTENT_PATH_PREFIX, "content:/");
+            }
+        }
+        if ("file".equalsIgnoreCase(uri.getScheme()) && uri.getPath() != null) {
+            return uri.getPath();
+        }
+        return filePath;
     }
 
     private Map<String, String> JSObjectToMap(JSObject object) {
