@@ -6,7 +6,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
 import android.webkit.MimeTypeMap;
-import com.getcapacitor.Bridge;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -22,6 +21,10 @@ import net.gotev.uploadservice.observer.request.RequestObserverDelegate;
 
 @CapacitorPlugin(name = "Uploader")
 public class UploaderPlugin extends Plugin {
+
+    private static final String CAPACITOR_FILE_PATH_PREFIX = "/_capacitor_file_";
+
+    private static final String CAPACITOR_CONTENT_PATH_PREFIX = "/_capacitor_content_";
 
     private final String pluginVersion = "8.1.11";
 
@@ -190,10 +193,10 @@ public class UploaderPlugin extends Plugin {
         Uri uri = Uri.parse(filePath);
         String path = uri.getPath();
         if (path != null) {
-            if (path.startsWith(Bridge.CAPACITOR_FILE_START)) {
-                return path.substring(Bridge.CAPACITOR_FILE_START.length());
+            if (path.startsWith(CAPACITOR_FILE_PATH_PREFIX)) {
+                return path.substring(CAPACITOR_FILE_PATH_PREFIX.length());
             }
-            if (path.startsWith(Bridge.CAPACITOR_CONTENT_START)) {
+            if (path.startsWith(CAPACITOR_CONTENT_PATH_PREFIX)) {
                 String scheme = uri.getScheme();
                 String host = uri.getHost();
                 if (scheme != null && host != null) {
@@ -201,9 +204,9 @@ public class UploaderPlugin extends Plugin {
                     if (uri.getPort() != -1) {
                         baseUrl += ":" + uri.getPort();
                     }
-                    return filePath.replace(baseUrl + Bridge.CAPACITOR_CONTENT_START, "content:/");
+                    return filePath.replace(baseUrl + CAPACITOR_CONTENT_PATH_PREFIX, "content:/");
                 }
-                return filePath.replace(Bridge.CAPACITOR_CONTENT_START, "content:/");
+                return filePath.replace(CAPACITOR_CONTENT_PATH_PREFIX, "content:/");
             }
         }
         if ("file".equalsIgnoreCase(uri.getScheme()) && uri.getPath() != null) {
