@@ -133,7 +133,10 @@ public class UploaderPlugin extends Plugin {
         String httpMethod = call.getString("method", "POST");
         String notificationTitle = call.getString("notificationTitle", "File Upload");
         int maxRetries = call.getInt("maxRetries", 2);
-        String uploadType = call.getString("uploadType", "binary");
+        String uploadType = call.getString("uploadType");
+        if (uploadType == null || uploadType.isEmpty()) {
+            uploadType = "PUT".equalsIgnoreCase(httpMethod) ? "binary" : "multipart";
+        }
         String fileField = call.getString("fileField", "file");
 
         Map<String, String> headers = JSObjectToMap(headersObj);

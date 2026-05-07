@@ -126,7 +126,7 @@ export interface uploadOption {
    * - 'binary': Uploads the file as raw binary data in the request body
    * - 'multipart': Uploads the file as multipart/form-data
    *
-   * @default 'binary'
+   * @default 'binary' when `method` is `'PUT'`, otherwise `'multipart'`
    * @since 0.0.2
    */
   uploadType?: 'binary' | 'multipart';

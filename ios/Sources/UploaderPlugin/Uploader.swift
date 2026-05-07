@@ -88,8 +88,8 @@ import MobileCoreServices
             }
             let tempDir = FileManager.default.temporaryDirectory
             let tempFile = tempDir.appendingPathComponent("upload-\(id).tmp")
-            try writeMultipartBodyToFile(at: tempFile, parameters: parameters, fileParts: fileParts, boundary: boundary)
             tempBodyFiles[id] = tempFile
+            try writeMultipartBodyToFile(at: tempFile, parameters: parameters, fileParts: fileParts, boundary: boundary)
 
             task = self.getUrlSession().uploadTask(with: request, fromFile: tempFile)
         }
