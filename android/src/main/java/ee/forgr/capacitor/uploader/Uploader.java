@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.OpenableColumns;
+import java.util.List;
 import java.util.Map;
 import net.gotev.uploadservice.UploadServiceConfig;
 import net.gotev.uploadservice.data.UploadNotificationConfig;
@@ -15,6 +16,19 @@ import net.gotev.uploadservice.protocols.multipart.MultipartUploadRequest;
 public class Uploader {
 
     private final Context context;
+
+    public static class UploadFile {
+
+        public final String filePath;
+        public final String fieldName;
+        public final String mimeType;
+
+        public UploadFile(String filePath, String fieldName, String mimeType) {
+            this.filePath = filePath;
+            this.fieldName = fieldName;
+            this.mimeType = mimeType;
+        }
+    }
 
     public Uploader(Context context) {
         this.context = context;
@@ -41,26 +55,33 @@ public class Uploader {
     }
 
     public String startUpload(
-        String filePath,
+        List<UploadFile> files,
         String serverUrl,
         Map<String, String> headers,
         Map<String, String> parameters,
         String httpMethod,
         String notificationTitle,
         int maxRetries,
-        String mimeType,
-        String uploadType,
-        String fileField
+        String uploadType
     ) throws Exception {
         UploadNotificationConfig notificationConfig = createNotificationConfig(notificationTitle);
 
         if ("multipart".equals(uploadType)) {
+            if (files == null || files.isEmpty()) {
+                throw new IllegalArgumentException("Missing required parameter: files");
+            }
             MultipartUploadRequest request = new MultipartUploadRequest(context, serverUrl)
                 .setMethod(httpMethod)
                 .setNotificationConfig((ctx, uploadId) -> notificationConfig)
                 .setMaxRetries(maxRetries);
 
-            request.addFileToUpload(filePath, fileField, getFileNameFromUri(Uri.parse(filePath)), mimeType);
+            for (UploadFile file : files) {
+                if (file == null || file.filePath == null || file.filePath.isEmpty()) {
+                    throw new IllegalArgumentException("Invalid file entry in files");
+                }
+                String fieldName = (file.fieldName == null || file.fieldName.isEmpty()) ? "file" : file.fieldName;
+                request.addFileToUpload(file.filePath, fieldName, getFileNameFromUri(Uri.parse(file.filePath)), file.mimeType);
+            }
 
             for (Map.Entry<String, String> entry : headers.entrySet()) {
                 if (entry.getKey() != null && entry.getValue() != null) {
@@ -75,7 +96,23 @@ public class Uploader {
 
             return request.startUpload();
         } else {
-            return startBinaryUpload(filePath, serverUrl, headers, parameters, httpMethod, notificationConfig, maxRetries, mimeType);
+            if (files == null || files.isEmpty()) {
+                throw new IllegalArgumentException("Missing required parameter: filePath or files");
+            }
+            if (files.size() != 1) {
+                throw new IllegalArgumentException("Binary uploads only support a single file");
+            }
+            UploadFile file = files.get(0);
+            return startBinaryUpload(
+                file.filePath,
+                serverUrl,
+                headers,
+                parameters,
+                httpMethod,
+                notificationConfig,
+                maxRetries,
+                file.mimeType
+            );
         }
     }
 

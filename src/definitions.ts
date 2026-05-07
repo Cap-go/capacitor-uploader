@@ -5,14 +5,55 @@ import type { PluginListenerHandle } from '@capacitor/core';
  *
  * @since 0.0.1
  */
+export interface UploadFileOption {
+  /**
+   * The local file path of the file to upload.
+   * Can be a file:// URL or an absolute path.
+   *
+   * @since 0.0.3
+   */
+  filePath: string;
+
+  /**
+   * The form field name for the file part when using multipart upload.
+   *
+   * If omitted, `uploadOption.fileField` is used (defaults to `'file'`).
+   *
+   * @since 0.0.3
+   */
+  fieldName?: string;
+
+  /**
+   * The MIME type of this file.
+   * If not specified, the plugin will attempt to determine it automatically.
+   *
+   * @since 0.0.3
+   */
+  mimeType?: string;
+}
+
 export interface uploadOption {
   /**
    * The local file path of the file to upload.
    * Can be a file:// URL or an absolute path.
    *
+   * If you need to upload multiple files in a single multipart request, use `files`.
+   *
    * @since 0.0.1
    */
-  filePath: string;
+  filePath?: string;
+
+  /**
+   * Multiple files to upload in a single request.
+   *
+   * When provided, uploads are sent as `multipart/form-data` with one part per file.
+   * Use `fieldName` to control each part name (e.g. `images[]`).
+   *
+   * Note: `PUT` uploads (e.g. presigned S3 URLs) only support a single file.
+   *
+   * @since 0.0.3
+   */
+  files?: UploadFileOption[];
 
   /**
    * The server URL endpoint where the file should be uploaded.
@@ -85,7 +126,7 @@ export interface uploadOption {
    * - 'binary': Uploads the file as raw binary data in the request body
    * - 'multipart': Uploads the file as multipart/form-data
    *
-   * @default 'binary'
+   * @default 'binary' when `method` is `'PUT'`, otherwise `'multipart'`
    * @since 0.0.2
    */
   uploadType?: 'binary' | 'multipart';
@@ -93,6 +134,9 @@ export interface uploadOption {
   /**
    * The form field name for the file when using multipart upload type.
    * Only used when uploadType is 'multipart'.
+   *
+   * For multi-file uploads via `files`, this is used as the default field name
+   * when a file entry does not specify `fieldName`.
    *
    * @default 'file'
    * @since 0.0.2
@@ -182,6 +226,22 @@ export interface UploaderPlugin {
    *   method: 'POST',
    *   uploadType: 'multipart',
    *   fileField: 'photo'
+   * });
+   * console.log('Upload started with ID:', id);
+   * ```
+   *
+   * @example
+   * ```typescript
+   * const { id } = await Uploader.startUpload({
+   *   serverUrl: 'https://api.example.com/upload',
+   *   method: 'POST',
+   *   uploadType: 'multipart',
+   *   files: [
+   *     { filePath: 'file:///...photo1.jpg', fieldName: 'images[]', mimeType: 'image/jpeg' },
+   *     { filePath: 'file:///...photo2.jpg', fieldName: 'images[]', mimeType: 'image/jpeg' },
+   *   ],
+   *   parameters: { albumId: '7' },
+   *   headers: { Authorization: 'Bearer token' },
    * });
    * console.log('Upload started with ID:', id);
    * ```

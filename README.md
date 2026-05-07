@@ -142,6 +142,25 @@ uploadToCustomServer(filePath, serverUrl);
 
 ```
 
+### Example multi-file multipart upload
+
+```typescript
+import { Uploader } from '@capgo/capacitor-uploader';
+
+const { id } = await Uploader.startUpload({
+  serverUrl: 'https://api.example.com/upload',
+  method: 'POST',
+  uploadType: 'multipart',
+  files: [
+    { filePath: 'file:///...photo1.jpg', fieldName: 'images[]', mimeType: 'image/jpeg' },
+    { filePath: 'file:///...photo2.jpg', fieldName: 'images[]', mimeType: 'image/jpeg' },
+  ],
+  parameters: { albumId: '7' },
+  headers: { Authorization: 'Bearer token' },
+});
+console.log('Upload started with ID:', id);
+```
+
 ### Example with Capacitor Camera preview
 
 Documentation for the [Capacitor Camera preview](https://github.com/Cap-go/camera-preview)
@@ -212,7 +231,7 @@ Capacitor Uploader Plugin for uploading files with background support and progre
 ### startUpload(...)
 
 ```typescript
-startUpload(options: uploadOption) => Promise<{ id: string; }>
+startUpload(options: uploadOption) => any
 ```
 
 Start uploading a file to a server.
@@ -224,7 +243,7 @@ Listen to upload events to track progress, completion, or failure.
 | ------------- | ----------------------------------------------------- | ------------------------------ |
 | **`options`** | <code><a href="#uploadoption">uploadOption</a></code> | - Configuration for the upload |
 
-**Returns:** <code>Promise&lt;{ id: string; }&gt;</code>
+**Returns:** <code>any</code>
 
 **Since:** 0.0.1
 
@@ -234,7 +253,7 @@ Listen to upload events to track progress, completion, or failure.
 ### removeUpload(...)
 
 ```typescript
-removeUpload(options: { id: string; }) => Promise<void>
+removeUpload(options: { id: string; }) => any
 ```
 
 Cancel and remove an ongoing upload.
@@ -245,6 +264,8 @@ This will stop the upload if it's in progress and clean up resources.
 | ------------- | ---------------------------- | ------------------------------------------- |
 | **`options`** | <code>{ id: string; }</code> | - Object containing the upload ID to remove |
 
+**Returns:** <code>any</code>
+
 **Since:** 0.0.1
 
 --------------------
@@ -253,7 +274,7 @@ This will stop the upload if it's in progress and clean up resources.
 ### addListener('events', ...)
 
 ```typescript
-addListener(eventName: 'events', listenerFunc: (state: UploadEvent) => void) => Promise<PluginListenerHandle>
+addListener(eventName: 'events', listenerFunc: (state: UploadEvent) => void) => any
 ```
 
 Listen for upload progress and status events.
@@ -268,7 +289,7 @@ Events are fired for:
 | **`eventName`**    | <code>'events'</code>                                                   | - Must be 'events'                          |
 | **`listenerFunc`** | <code>(state: <a href="#uploadevent">UploadEvent</a>) =&gt; void</code> | - Callback function to handle upload events |
 
-**Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
+**Returns:** <code>any</code>
 
 **Since:** 0.0.1
 
@@ -278,12 +299,12 @@ Events are fired for:
 ### getPluginVersion()
 
 ```typescript
-getPluginVersion() => Promise<{ version: string; }>
+getPluginVersion() => any
 ```
 
 Get the native Capacitor plugin version.
 
-**Returns:** <code>Promise&lt;{ version: string; }&gt;</code>
+**Returns:** <code>any</code>
 
 **Since:** 0.0.1
 
@@ -295,27 +316,30 @@ Get the native Capacitor plugin version.
 
 #### uploadOption
 
+| Prop                    | Type                                    | Description                                                                                                                                                                                                                                                          | Default                                                                 | Since |
+| ----------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ----- |
+| **`filePath`**          | <code>string</code>                     | The local file path of the file to upload. Can be a file:// URL or an absolute path. If you need to upload multiple files in a single multipart request, use `files`.                                                                                                |                                                                         | 0.0.1 |
+| **`files`**             | <code>{}</code>                         | Multiple files to upload in a single request. When provided, uploads are sent as `multipart/form-data` with one part per file. Use `fieldName` to control each part name (e.g. `images[]`). Note: `PUT` uploads (e.g. presigned S3 URLs) only support a single file. |                                                                         | 0.0.3 |
+| **`serverUrl`**         | <code>string</code>                     | The server URL endpoint where the file should be uploaded.                                                                                                                                                                                                           |                                                                         | 0.0.1 |
+| **`notificationTitle`** | <code>string</code>                     | The title of the upload notification shown to the user. Android only.                                                                                                                                                                                                | <code>'Uploading'</code>                                                | 0.0.1 |
+| **`headers`**           | <code>{ [key: string]: string; }</code> | HTTP headers to send with the upload request. Useful for authentication tokens, content types, etc.                                                                                                                                                                  |                                                                         | 0.0.1 |
+| **`method`**            | <code>'PUT' \| 'POST'</code>            | The HTTP method to use for the upload request.                                                                                                                                                                                                                       | <code>'POST'</code>                                                     | 0.0.1 |
+| **`mimeType`**          | <code>string</code>                     | The MIME type of the file being uploaded. If not specified, the plugin will attempt to determine it automatically.                                                                                                                                                   |                                                                         | 0.0.1 |
+| **`parameters`**        | <code>{ [key: string]: string; }</code> | Additional form parameters to send with the upload request. These will be included as form data in multipart uploads.                                                                                                                                                |                                                                         | 0.0.1 |
+| **`maxRetries`**        | <code>number</code>                     | The maximum number of times to retry the upload if it fails.                                                                                                                                                                                                         | <code>0</code>                                                          | 0.0.1 |
+| **`uploadType`**        | <code>'binary' \| 'multipart'</code>    | The type of upload to perform. - 'binary': Uploads the file as raw binary data in the request body - 'multipart': Uploads the file as multipart/form-data                                                                                                            | <code>'binary' when `method` is `'PUT'`, otherwise `'multipart'`</code> | 0.0.2 |
+| **`fileField`**         | <code>string</code>                     | The form field name for the file when using multipart upload type. Only used when uploadType is 'multipart'. For multi-file uploads via `files`, this is used as the default field name when a file entry does not specify `fieldName`.                              | <code>'file'</code>                                                     | 0.0.2 |
+
+
+#### UploadFileOption
+
 Configuration options for uploading a file.
 
-| Prop                    | Type                                    | Description                                                                                                                                               | Default                  | Since |
-| ----------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ----- |
-| **`filePath`**          | <code>string</code>                     | The local file path of the file to upload. Can be a file:// URL or an absolute path.                                                                      |                          | 0.0.1 |
-| **`serverUrl`**         | <code>string</code>                     | The server URL endpoint where the file should be uploaded.                                                                                                |                          | 0.0.1 |
-| **`notificationTitle`** | <code>string</code>                     | The title of the upload notification shown to the user. Android only.                                                                                     | <code>'Uploading'</code> | 0.0.1 |
-| **`headers`**           | <code>{ [key: string]: string; }</code> | HTTP headers to send with the upload request. Useful for authentication tokens, content types, etc.                                                       |                          | 0.0.1 |
-| **`method`**            | <code>'PUT' \| 'POST'</code>            | The HTTP method to use for the upload request.                                                                                                            | <code>'POST'</code>      | 0.0.1 |
-| **`mimeType`**          | <code>string</code>                     | The MIME type of the file being uploaded. If not specified, the plugin will attempt to determine it automatically.                                        |                          | 0.0.1 |
-| **`parameters`**        | <code>{ [key: string]: string; }</code> | Additional form parameters to send with the upload request. These will be included as form data in multipart uploads.                                     |                          | 0.0.1 |
-| **`maxRetries`**        | <code>number</code>                     | The maximum number of times to retry the upload if it fails.                                                                                              | <code>0</code>           | 0.0.1 |
-| **`uploadType`**        | <code>'binary' \| 'multipart'</code>    | The type of upload to perform. - 'binary': Uploads the file as raw binary data in the request body - 'multipart': Uploads the file as multipart/form-data | <code>'binary'</code>    | 0.0.2 |
-| **`fileField`**         | <code>string</code>                     | The form field name for the file when using multipart upload type. Only used when uploadType is 'multipart'.                                              | <code>'file'</code>      | 0.0.2 |
-
-
-#### PluginListenerHandle
-
-| Prop         | Type                                      |
-| ------------ | ----------------------------------------- |
-| **`remove`** | <code>() =&gt; Promise&lt;void&gt;</code> |
+| Prop            | Type                | Description                                                                                                                                                         | Since |
+| --------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| **`filePath`**  | <code>string</code> | The local file path of the file to upload. Can be a file:// URL or an absolute path.                                                                                | 0.0.3 |
+| **`fieldName`** | <code>string</code> | The form field name for the file part when using multipart upload. If omitted, <a href="#uploadoption">`uploadOption.fileField`</a> is used (defaults to `'file'`). | 0.0.3 |
+| **`mimeType`**  | <code>string</code> | The MIME type of this file. If not specified, the plugin will attempt to determine it automatically.                                                                | 0.0.3 |
 
 
 #### UploadEvent
@@ -334,4 +358,3 @@ Event emitted during the upload lifecycle.
 
 For the inspiration and the code on ios: https://github.com/Vydia/react-native-background-upload/tree/master
 For the API definition: https://www.npmjs.com/package/cordova-plugin-background-upload-put-s3
-

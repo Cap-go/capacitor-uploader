@@ -2,7 +2,7 @@ import { WebPlugin } from '@capacitor/core';
 import { openDB } from 'idb';
 
 import { PathHelper } from './PathHelper';
-import type { UploaderPlugin, uploadOption } from './definitions';
+import type { UploadFileOption, UploaderPlugin, uploadOption } from './definitions';
 
 export class UploaderWeb extends WebPlugin implements UploaderPlugin {
   private uploads: Map<string, { controller: AbortController; retries: number }> = new Map();
@@ -35,26 +35,45 @@ export class UploaderWeb extends WebPlugin implements UploaderPlugin {
   }
 
   private async doUpload(id: string, options: uploadOption) {
-    const { filePath, serverUrl, headers = {}, method = 'POST', parameters = {} } = options;
+    const { serverUrl, headers = {}, method = 'POST', parameters = {} } = options;
     const upload = this.uploads.get(id);
 
     if (!upload) return;
 
     try {
-      const file = await this.getFileFromPath(filePath);
-      if (!file) throw new Error('File not found');
+      const files = this.normalizeFiles(options);
+      if (files.length === 0) throw new Error('Missing required parameter: filePath or files');
 
-      const formData = new FormData();
-      formData.append('file', file);
+      const resolvedMethod = method.toUpperCase();
+      const uploadType = options.uploadType ?? (resolvedMethod === 'PUT' ? 'binary' : 'multipart');
 
-      for (const [key, value] of Object.entries(parameters)) {
-        formData.append(key, value);
+      let body: BodyInit;
+      if (resolvedMethod === 'PUT' || uploadType === 'binary') {
+        if (files.length !== 1) throw new Error('Binary uploads only support a single file');
+        const file = await this.getFileFromPath(files[0].filePath);
+        if (!file) throw new Error('File not found');
+        body = file;
+      } else {
+        const formData = new FormData();
+
+        for (const fileOption of files) {
+          const file = await this.getFileFromPath(fileOption.filePath);
+          if (!file) throw new Error('File not found');
+          const fieldName = fileOption.fieldName ?? options.fileField ?? 'file';
+          formData.append(fieldName, file);
+        }
+
+        for (const [key, value] of Object.entries(parameters)) {
+          formData.append(key, value);
+        }
+
+        body = formData;
       }
 
       const response = await fetch(serverUrl, {
-        method,
+        method: resolvedMethod,
         headers,
-        body: method === 'PUT' ? file : formData,
+        body,
         signal: upload.controller.signal,
       });
 
@@ -83,6 +102,20 @@ export class UploaderWeb extends WebPlugin implements UploaderPlugin {
         this.uploads.delete(id);
       }
     }
+  }
+
+  private normalizeFiles(options: uploadOption): UploadFileOption[] {
+    if (options.files && options.files.length > 0) return options.files;
+    if (options.filePath) {
+      return [
+        {
+          filePath: options.filePath,
+          fieldName: options.fileField,
+          mimeType: options.mimeType,
+        },
+      ];
+    }
+    return [];
   }
 
   private async getFileFromPath(filePath: string): Promise<File | null> {
