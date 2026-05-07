@@ -10,8 +10,14 @@ import MobileCoreServices
     private var retries: [String: Int] = [:]
     private var tempBodyFiles: [String: URL] = [:]
 
+    private struct UploadFilePart {
+        let fileUrl: URL
+        let fieldName: String
+        let mimeType: String
+    }
+
     private struct UploadConfig {
-        let filePath: String
+        let filePath: String?
         let serverUrl: String
         let options: [String: Any]
     }
@@ -20,7 +26,7 @@ import MobileCoreServices
 
     var eventHandler: (([String: Any]) -> Void)?
 
-    @objc public func startUpload(_ filePath: String, _ serverUrl: String, _ options: [String: Any], maxRetries: Int = 3) async throws -> String {
+    @objc public func startUpload(_ filePath: String?, _ serverUrl: String, _ options: [String: Any], maxRetries: Int = 3) async throws -> String {
         let id = UUID().uuidString
         print("startUpload: \(id)")
 
@@ -53,25 +59,25 @@ import MobileCoreServices
             request.setValue(value, forHTTPHeaderField: key)
         }
 
-        let filePath = config.filePath
-        let fileUrl: URL
-        if let candidateUrl = URL(string: filePath), candidateUrl.isFileURL {
-            fileUrl = candidateUrl
-        } else {
-            fileUrl = URL(fileURLWithPath: filePath)
-        }
-        guard fileUrl.isFileURL else {
-            throw NSError(domain: "UploaderPlugin", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid file URL"])
-        }
-        let mimeType = config.options["mimeType"] as? String ?? guessMIMEType(from: filePath)
+        let defaultFieldName = (config.options["fileField"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? "file"
+        let fileParts = try resolveUploadFiles(config: config, defaultFieldName: defaultFieldName)
+
+        let uploadType = (config.options["uploadType"] as? String)?.lowercased() ?? (request.httpMethod == "PUT" ? "binary" : "multipart")
 
         let task: URLSessionTask
-        if request.httpMethod == "PUT" {
-            // For S3 presigned URL uploads
-            request.setValue(mimeType, forHTTPHeaderField: "Content-Type")
-            task = self.getUrlSession().uploadTask(with: request, fromFile: fileUrl)
+        if request.httpMethod == "PUT" || uploadType == "binary" {
+            // Binary uploads (e.g. S3 presigned URL uploads)
+            guard fileParts.count == 1, let filePart = fileParts.first else {
+                throw NSError(
+                    domain: "UploaderPlugin",
+                    code: 2,
+                    userInfo: [NSLocalizedDescriptionKey: "Binary uploads only support a single file"]
+                )
+            }
+            request.setValue(filePart.mimeType, forHTTPHeaderField: "Content-Type")
+            task = self.getUrlSession().uploadTask(with: request, fromFile: filePart.fileUrl)
         } else {
-            // For POST uploads
+            // Multipart uploads
             let boundary = UUID().uuidString
             request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
 
@@ -82,7 +88,7 @@ import MobileCoreServices
             }
             let tempDir = FileManager.default.temporaryDirectory
             let tempFile = tempDir.appendingPathComponent("upload-\(id).tmp")
-            try writeMultipartBodyToFile(at: tempFile, parameters: parameters, fileUrl: fileUrl, mimeType: mimeType, boundary: boundary)
+            try writeMultipartBodyToFile(at: tempFile, parameters: parameters, fileParts: fileParts, boundary: boundary)
             tempBodyFiles[id] = tempFile
 
             task = self.getUrlSession().uploadTask(with: request, fromFile: tempFile)
@@ -119,6 +125,51 @@ import MobileCoreServices
             return mimeType
         }
         return "application/octet-stream"
+    }
+
+    private func resolveUploadFiles(config: UploadConfig, defaultFieldName: String) throws -> [UploadFilePart] {
+        let fallbackMimeType = (config.options["mimeType"] as? String).flatMap { $0.isEmpty ? nil : $0 }
+
+        if let files = config.options["files"] as? [[String: String]], !files.isEmpty {
+            return try files.enumerated().map { (index, file) in
+                guard let filePath = file["filePath"], !filePath.isEmpty else {
+                    throw NSError(
+                        domain: "UploaderPlugin",
+                        code: 3,
+                        userInfo: [NSLocalizedDescriptionKey: "Missing required parameter: files[\(index)].filePath"]
+                    )
+                }
+                let fileUrl = try resolveFileUrl(from: filePath)
+                let fieldName = (file["fieldName"]?.isEmpty == false ? file["fieldName"]! : defaultFieldName)
+                let mimeType = (file["mimeType"]?.isEmpty == false ? file["mimeType"]! : (fallbackMimeType ?? guessMIMEType(from: fileUrl.path)))
+                return UploadFilePart(fileUrl: fileUrl, fieldName: fieldName, mimeType: mimeType)
+            }
+        }
+
+        if let filePath = config.filePath, !filePath.isEmpty {
+            let fileUrl = try resolveFileUrl(from: filePath)
+            let mimeType = fallbackMimeType ?? guessMIMEType(from: fileUrl.path)
+            return [UploadFilePart(fileUrl: fileUrl, fieldName: defaultFieldName, mimeType: mimeType)]
+        }
+
+        throw NSError(
+            domain: "UploaderPlugin",
+            code: 4,
+            userInfo: [NSLocalizedDescriptionKey: "Missing required parameter: filePath or files"]
+        )
+    }
+
+    private func resolveFileUrl(from filePath: String) throws -> URL {
+        let fileUrl: URL
+        if let candidateUrl = URL(string: filePath), candidateUrl.isFileURL {
+            fileUrl = candidateUrl
+        } else {
+            fileUrl = URL(fileURLWithPath: filePath)
+        }
+        guard fileUrl.isFileURL else {
+            throw NSError(domain: "UploaderPlugin", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid file URL"])
+        }
+        return fileUrl
     }
     public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         guard let id = task.taskDescription else { return }
@@ -179,7 +230,12 @@ import MobileCoreServices
     }
 
     // Writes multipart/form-data body directly to a file, streaming the file content in chunks
-    private func writeMultipartBodyToFile(at tempFile: URL, parameters: [String: String], fileUrl: URL, mimeType: String, boundary: String) throws {
+    private func writeMultipartBodyToFile(
+        at tempFile: URL,
+        parameters: [String: String],
+        fileParts: [UploadFilePart],
+        boundary: String
+    ) throws {
         FileManager.default.createFile(atPath: tempFile.path, contents: nil)
         let writeHandle = try FileHandle(forWritingTo: tempFile)
         defer { try? writeHandle.close() }
@@ -194,19 +250,23 @@ import MobileCoreServices
             try write("\(value)\r\n")
         }
 
-        try write("--\(boundary)\r\n")
-        try write("Content-Disposition: form-data; name=\"file\"; filename=\"\(fileUrl.lastPathComponent)\"\r\n")
-        try write("Content-Type: \(mimeType)\r\n\r\n")
+        for filePart in fileParts {
+            try write("--\(boundary)\r\n")
+            try write("Content-Disposition: form-data; name=\"\(filePart.fieldName)\"; filename=\"\(filePart.fileUrl.lastPathComponent)\"\r\n")
+            try write("Content-Type: \(filePart.mimeType)\r\n\r\n")
 
-        let readHandle = try FileHandle(forReadingFrom: fileUrl)
-        defer { try? readHandle.close() }
-        let chunkSize = 64 * 1024
-        while true {
-            guard let chunk = try readHandle.read(upToCount: chunkSize), !chunk.isEmpty else { break }
-            try writeHandle.write(contentsOf: chunk)
+            let readHandle = try FileHandle(forReadingFrom: filePart.fileUrl)
+            defer { try? readHandle.close() }
+            let chunkSize = 64 * 1024
+            while true {
+                guard let chunk = try readHandle.read(upToCount: chunkSize), !chunk.isEmpty else { break }
+                try writeHandle.write(contentsOf: chunk)
+            }
+
+            try write("\r\n")
         }
 
-        try write("\r\n--\(boundary)--")
+        try write("--\(boundary)--\r\n")
     }
 }
 

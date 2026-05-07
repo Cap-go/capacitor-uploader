@@ -6,11 +6,13 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
 import android.webkit.MimeTypeMap;
+import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -18,6 +20,7 @@ import net.gotev.uploadservice.data.UploadInfo;
 import net.gotev.uploadservice.network.ServerResponse;
 import net.gotev.uploadservice.observer.request.RequestObserver;
 import net.gotev.uploadservice.observer.request.RequestObserverDelegate;
+import org.json.JSONObject;
 
 @CapacitorPlugin(name = "Uploader")
 public class UploaderPlugin extends Plugin {
@@ -117,20 +120,13 @@ public class UploaderPlugin extends Plugin {
     @PluginMethod
     public void startUpload(PluginCall call) {
         String filePath = call.getString("filePath");
+        JSArray filesArray = call.getArray("files");
         String serverUrl = call.getString("serverUrl");
 
-        if (filePath == null || filePath.isEmpty()) {
-            call.reject("Missing required parameter: filePath");
-            return;
-        }
         if (serverUrl == null || serverUrl.isEmpty()) {
             call.reject("Missing required parameter: serverUrl");
             return;
         }
-
-        // Convert Capacitor web-accessible URLs to paths native code can open.
-        // Capacitor 8+ removed Bridge.getLocalUrl(String); mirror AndroidProtocolHandler logic.
-        String localFilePath = resolveCapacitorPath(filePath);
 
         JSObject headersObj = call.getObject("headers", new JSObject());
         JSObject parametersObj = call.getObject("parameters", new JSObject());
@@ -144,19 +140,53 @@ public class UploaderPlugin extends Plugin {
         Map<String, String> parameters = JSObjectToMap(parametersObj);
 
         try {
-            String mimeType = call.getString("mimeType", getMimeType(localFilePath));
+            ArrayList<Uploader.UploadFile> filesToUpload = new ArrayList<>();
+
+            if (filesArray != null && filesArray.length() > 0) {
+                for (int i = 0; i < filesArray.length(); i++) {
+                    JSONObject fileObj = filesArray.getJSONObject(i);
+                    String rawPath = fileObj.optString("filePath", null);
+                    if (rawPath == null || rawPath.isEmpty()) {
+                        call.reject("Missing required parameter: files[" + i + "].filePath");
+                        return;
+                    }
+
+                    // Convert Capacitor web-accessible URLs to paths native code can open.
+                    // Capacitor 8+ removed Bridge.getLocalUrl(String); mirror AndroidProtocolHandler logic.
+                    String localPath = resolveCapacitorPath(rawPath);
+                    String fieldName = fileObj.optString("fieldName", fileField);
+
+                    String mimeType = null;
+                    if (fileObj.has("mimeType")) {
+                        mimeType = fileObj.optString("mimeType", null);
+                    } else {
+                        mimeType = call.getString("mimeType", null);
+                    }
+                    if (mimeType == null || mimeType.isEmpty()) {
+                        mimeType = getMimeType(localPath);
+                    }
+
+                    filesToUpload.add(new Uploader.UploadFile(localPath, fieldName, mimeType));
+                }
+            } else {
+                if (filePath == null || filePath.isEmpty()) {
+                    call.reject("Missing required parameter: filePath or files");
+                    return;
+                }
+                String localFilePath = resolveCapacitorPath(filePath);
+                String mimeType = call.getString("mimeType", getMimeType(localFilePath));
+                filesToUpload.add(new Uploader.UploadFile(localFilePath, fileField, mimeType));
+            }
 
             String id = implementation.startUpload(
-                localFilePath,
+                filesToUpload,
                 serverUrl,
                 headers,
                 parameters,
                 httpMethod,
                 notificationTitle,
                 maxRetries,
-                mimeType,
-                uploadType,
-                fileField
+                uploadType
             );
             JSObject result = new JSObject();
             result.put("id", id);
