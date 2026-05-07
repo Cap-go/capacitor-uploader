@@ -231,7 +231,7 @@ Capacitor Uploader Plugin for uploading files with background support and progre
 ### startUpload(...)
 
 ```typescript
-startUpload(options: uploadOption) => any
+startUpload(options: uploadOption) => Promise<{ id: string; }>
 ```
 
 Start uploading a file to a server.
@@ -243,7 +243,7 @@ Listen to upload events to track progress, completion, or failure.
 | ------------- | ----------------------------------------------------- | ------------------------------ |
 | **`options`** | <code><a href="#uploadoption">uploadOption</a></code> | - Configuration for the upload |
 
-**Returns:** <code>any</code>
+**Returns:** <code>Promise&lt;{ id: string; }&gt;</code>
 
 **Since:** 0.0.1
 
@@ -253,7 +253,7 @@ Listen to upload events to track progress, completion, or failure.
 ### removeUpload(...)
 
 ```typescript
-removeUpload(options: { id: string; }) => any
+removeUpload(options: { id: string; }) => Promise<void>
 ```
 
 Cancel and remove an ongoing upload.
@@ -264,8 +264,6 @@ This will stop the upload if it's in progress and clean up resources.
 | ------------- | ---------------------------- | ------------------------------------------- |
 | **`options`** | <code>{ id: string; }</code> | - Object containing the upload ID to remove |
 
-**Returns:** <code>any</code>
-
 **Since:** 0.0.1
 
 --------------------
@@ -274,7 +272,7 @@ This will stop the upload if it's in progress and clean up resources.
 ### addListener('events', ...)
 
 ```typescript
-addListener(eventName: 'events', listenerFunc: (state: UploadEvent) => void) => any
+addListener(eventName: 'events', listenerFunc: (state: UploadEvent) => void) => Promise<PluginListenerHandle>
 ```
 
 Listen for upload progress and status events.
@@ -289,7 +287,7 @@ Events are fired for:
 | **`eventName`**    | <code>'events'</code>                                                   | - Must be 'events'                          |
 | **`listenerFunc`** | <code>(state: <a href="#uploadevent">UploadEvent</a>) =&gt; void</code> | - Callback function to handle upload events |
 
-**Returns:** <code>any</code>
+**Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
 
 **Since:** 0.0.1
 
@@ -299,12 +297,12 @@ Events are fired for:
 ### getPluginVersion()
 
 ```typescript
-getPluginVersion() => any
+getPluginVersion() => Promise<{ version: string; }>
 ```
 
 Get the native Capacitor plugin version.
 
-**Returns:** <code>any</code>
+**Returns:** <code>Promise&lt;{ version: string; }&gt;</code>
 
 **Since:** 0.0.1
 
@@ -319,7 +317,7 @@ Get the native Capacitor plugin version.
 | Prop                    | Type                                    | Description                                                                                                                                                                                                                                                          | Default                                                                 | Since |
 | ----------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ----- |
 | **`filePath`**          | <code>string</code>                     | The local file path of the file to upload. Can be a file:// URL or an absolute path. If you need to upload multiple files in a single multipart request, use `files`.                                                                                                |                                                                         | 0.0.1 |
-| **`files`**             | <code>{}</code>                         | Multiple files to upload in a single request. When provided, uploads are sent as `multipart/form-data` with one part per file. Use `fieldName` to control each part name (e.g. `images[]`). Note: `PUT` uploads (e.g. presigned S3 URLs) only support a single file. |                                                                         | 0.0.3 |
+| **`files`**             | <code>UploadFileOption[]</code>         | Multiple files to upload in a single request. When provided, uploads are sent as `multipart/form-data` with one part per file. Use `fieldName` to control each part name (e.g. `images[]`). Note: `PUT` uploads (e.g. presigned S3 URLs) only support a single file. |                                                                         | 0.0.3 |
 | **`serverUrl`**         | <code>string</code>                     | The server URL endpoint where the file should be uploaded.                                                                                                                                                                                                           |                                                                         | 0.0.1 |
 | **`notificationTitle`** | <code>string</code>                     | The title of the upload notification shown to the user. Android only.                                                                                                                                                                                                | <code>'Uploading'</code>                                                | 0.0.1 |
 | **`headers`**           | <code>{ [key: string]: string; }</code> | HTTP headers to send with the upload request. Useful for authentication tokens, content types, etc.                                                                                                                                                                  |                                                                         | 0.0.1 |
@@ -340,6 +338,13 @@ Configuration options for uploading a file.
 | **`filePath`**  | <code>string</code> | The local file path of the file to upload. Can be a file:// URL or an absolute path.                                                                                | 0.0.3 |
 | **`fieldName`** | <code>string</code> | The form field name for the file part when using multipart upload. If omitted, <a href="#uploadoption">`uploadOption.fileField`</a> is used (defaults to `'file'`). | 0.0.3 |
 | **`mimeType`**  | <code>string</code> | The MIME type of this file. If not specified, the plugin will attempt to determine it automatically.                                                                | 0.0.3 |
+
+
+#### PluginListenerHandle
+
+| Prop         | Type                                      |
+| ------------ | ----------------------------------------- |
+| **`remove`** | <code>() =&gt; Promise&lt;void&gt;</code> |
 
 
 #### UploadEvent
