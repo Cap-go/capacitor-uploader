@@ -202,6 +202,32 @@ export interface UploadEvent {
 /**
  * Capacitor Uploader Plugin for uploading files with background support and progress tracking.
  *
+ * ### iOS setup
+ *
+ * On iOS the native layer uses a background `URLSession` with the identifier
+ * `CapacitorUploaderBackgroundSession`. Many apps can upload without adding
+ * `UIBackgroundModes`; add `fetch` when you need uploads to continue after the app
+ * is suspended.
+ *
+ * App Store Connect rejects builds that declare `UIBackgroundModes` → `processing`
+ * without `BGTaskSchedulerPermittedIdentifiers`. This plugin does not schedule
+ * `BGTaskScheduler` work, so avoid `processing` unless another feature needs it.
+ * If `processing` is present (for example from older setup guides), include
+ * `CapacitorUploaderBackgroundSession` in `BGTaskSchedulerPermittedIdentifiers`
+ * in your app's `Info.plist`.
+ *
+ * @example
+ * ```xml
+ * <key>UIBackgroundModes</key>
+ * <array>
+ *   <string>fetch</string>
+ * </array>
+ * <key>BGTaskSchedulerPermittedIdentifiers</key>
+ * <array>
+ *   <string>CapacitorUploaderBackgroundSession</string>
+ * </array>
+ * ```
+ *
  * @since 0.0.1
  */
 export interface UploaderPlugin {
