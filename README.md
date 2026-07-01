@@ -65,6 +65,32 @@ Add the following to your `AndroidManifest.xml` file:
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 ```
 
+
+
+## iOS
+
+On iOS the plugin uploads through a background `URLSession` using the identifier `CapacitorUploaderBackgroundSession`.
+
+Uploads often work without extra `Info.plist` keys. To allow the system to wake your app when background transfers finish, add the `fetch` background mode:
+
+```xml
+<key>UIBackgroundModes</key>
+<array>
+  <string>fetch</string>
+</array>
+```
+
+Do **not** add the `processing` background mode for this plugin alone. App Store Connect requires `BGTaskSchedulerPermittedIdentifiers` whenever `processing` is declared, and this plugin does not register `BGTaskScheduler` tasks. If your app already includes `processing` (for example from older documentation) and validation fails, add:
+
+```xml
+<key>BGTaskSchedulerPermittedIdentifiers</key>
+<array>
+  <string>CapacitorUploaderBackgroundSession</string>
+</array>
+```
+
+See [issue #115](https://github.com/Cap-go/capacitor-uploader/issues/115) for context.
+
 ## Example S3 upload
 
 ```typescript
@@ -241,6 +267,20 @@ Documentation for the [Capacitor Camera preview](https://github.com/Cap-go/camer
 <!--Update the source file JSDoc comments and rerun docgen to update the docs below-->
 
 Capacitor Uploader Plugin for uploading files with background support and progress tracking.
+
+### iOS setup
+
+On iOS the native layer uses a background `URLSession` with the identifier
+`CapacitorUploaderBackgroundSession`. Many apps can upload without adding
+`UIBackgroundModes`; add `fetch` when you need uploads to continue after the app
+is suspended.
+
+App Store Connect rejects builds that declare `UIBackgroundModes` → `processing`
+without `BGTaskSchedulerPermittedIdentifiers`. This plugin does not schedule
+`BGTaskScheduler` work, so avoid `processing` unless another feature needs it.
+If `processing` is present (for example from older setup guides), include
+`CapacitorUploaderBackgroundSession` in `BGTaskSchedulerPermittedIdentifiers`
+in your app's `Info.plist`.
 
 ### startUpload(...)
 
