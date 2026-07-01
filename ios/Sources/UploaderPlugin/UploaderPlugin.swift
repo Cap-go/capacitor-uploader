@@ -9,7 +9,8 @@ public class UploaderPlugin: CAPPlugin, CAPBridgedPlugin {
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "startUpload", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "removeUpload", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "getPluginVersion", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "getPluginVersion", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "acknowledgeEvent", returnType: CAPPluginReturnPromise)
     ]
     private let implementation = Uploader()
 
@@ -66,6 +67,14 @@ public class UploaderPlugin: CAPPlugin, CAPBridgedPlugin {
                 call.reject("Failed to start upload: \(error.localizedDescription)")
             }
         }
+    }
+
+    @objc func acknowledgeEvent(_ call: CAPPluginCall) {
+        guard let eventId = call.getString("eventId"), !eventId.isEmpty else {
+            call.reject("Missing required parameter: eventId")
+            return
+        }
+        call.resolve()
     }
 
     @objc func removeUpload(_ call: CAPPluginCall) {

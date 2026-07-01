@@ -174,6 +174,10 @@ export class UploaderWeb extends WebPlugin implements UploaderPlugin {
     }
   }
 
+  async acknowledgeEvent(_options: { eventId: string }): Promise<void> {
+    // Web uploads run in-process; events are not persisted for replay.
+  }
+
   async getPluginVersion(): Promise<{ version: string }> {
     return { version: 'web' };
   }
