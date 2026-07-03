@@ -119,6 +119,7 @@ public class UploaderPlugin extends Plugin {
 
                 @Override
                 public void onSuccess(Context context, UploadInfo uploadInfo, ServerResponse serverResponse) {
+                    implementation.clearTempMultipartBody(uploadInfo.getUploadId());
                     JSObject event = new JSObject();
                     event.put("name", "completed");
                     JSObject payload = new JSObject();
@@ -133,6 +134,7 @@ public class UploaderPlugin extends Plugin {
 
                 @Override
                 public void onError(Context context, UploadInfo uploadInfo, Throwable exception) {
+                    implementation.clearTempMultipartBody(uploadInfo.getUploadId());
                     JSObject event = new JSObject();
                     event.put("name", "failed");
                     JSObject payload = new JSObject();
@@ -147,6 +149,7 @@ public class UploaderPlugin extends Plugin {
 
                 @Override
                 public void onCompleted(Context context, UploadInfo uploadInfo) {
+                    implementation.clearTempMultipartBody(uploadInfo.getUploadId());
                     JSObject event = new JSObject();
                     event.put("name", "finished");
                     event.put("id", uploadInfo.getUploadId());
@@ -293,9 +296,9 @@ public class UploaderPlugin extends Plugin {
                     if (uri.getPort() != -1) {
                         baseUrl += ":" + uri.getPort();
                     }
-                    return filePath.replace(baseUrl + CAPACITOR_CONTENT_PATH_PREFIX, "content:/");
+                    return filePath.replace(baseUrl + CAPACITOR_CONTENT_PATH_PREFIX, "content://");
                 }
-                return filePath.replace(CAPACITOR_CONTENT_PATH_PREFIX, "content:/");
+                return filePath.replace(CAPACITOR_CONTENT_PATH_PREFIX, "content://");
             }
         }
         if ("file".equalsIgnoreCase(uri.getScheme()) && uri.getPath() != null) {
