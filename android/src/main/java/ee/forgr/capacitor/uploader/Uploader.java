@@ -143,8 +143,7 @@ public class Uploader {
         }
     }
 
-    private File writeMultipartBodyToFile(List<UploadFile> files, Map<String, String> parameters, String boundary)
-        throws IOException {
+    private File writeMultipartBodyToFile(List<UploadFile> files, Map<String, String> parameters, String boundary) throws IOException {
         File tempFile = File.createTempFile("upload-", ".tmp", context.getCacheDir());
 
         try (FileOutputStream output = new FileOutputStream(tempFile)) {
@@ -169,19 +168,10 @@ public class Uploader {
                 if (fileName == null || fileName.isEmpty()) {
                     fileName = "file";
                 }
-                String mimeType = (file.mimeType == null || file.mimeType.isEmpty())
-                    ? "application/octet-stream"
-                    : file.mimeType;
+                String mimeType = (file.mimeType == null || file.mimeType.isEmpty()) ? "application/octet-stream" : file.mimeType;
 
                 writeUtf8(output, "--" + boundary + "\r\n");
-                writeUtf8(
-                    output,
-                    "Content-Disposition: form-data; name=\"" +
-                    fieldName +
-                    "\"; filename=\"" +
-                    fileName +
-                    "\"\r\n"
-                );
+                writeUtf8(output, "Content-Disposition: form-data; name=\"" + fieldName + "\"; filename=\"" + fileName + "\"\r\n");
                 writeUtf8(output, "Content-Type: " + mimeType + "\r\n\r\n");
                 streamFileToOutput(file.filePath, output);
                 writeUtf8(output, "\r\n");
