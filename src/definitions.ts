@@ -32,6 +32,49 @@ export interface UploadFileOption {
   mimeType?: string;
 }
 
+/**
+ * Options for starting a single-file multipart upload.
+ *
+ * @since 8.3.2
+ */
+export interface UploadMultipartOptions {
+  /**
+   * The server URL endpoint where the multipart request should be sent.
+   *
+   * @since 8.3.2
+   */
+  url: string;
+
+  /**
+   * The local file path of the file to upload.
+   * Can be a file:// URL or an absolute path.
+   *
+   * @since 8.3.2
+   */
+  filePath: string;
+
+  /**
+   * The form field name for the uploaded file part.
+   *
+   * @since 8.3.2
+   */
+  fieldName: string;
+
+  /**
+   * Additional form fields to include in the multipart request.
+   *
+   * @since 8.3.2
+   */
+  fields?: { [key: string]: string };
+
+  /**
+   * HTTP headers to send with the upload request.
+   *
+   * @since 8.3.2
+   */
+  headers?: { [key: string]: string };
+}
+
 export interface uploadOption {
   /**
    * The local file path of the file to upload.
@@ -283,6 +326,30 @@ export interface UploaderPlugin {
    * ```
    */
   startUpload(options: uploadOption): Promise<{ id: string }>;
+
+  /**
+   * Start uploading a single file as multipart/form-data.
+   *
+   * This is a convenience API for backends that expect a named file field and
+   * additional form fields. Existing `startUpload` binary uploads are unchanged.
+   *
+   * @param options - Configuration for the multipart upload
+   * @returns Promise that resolves with the upload ID
+   * @throws Error if the upload fails to start
+   * @since 8.3.2
+   * @example
+   * ```typescript
+   * const { id } = await Uploader.uploadMultipart({
+   *   url: 'https://example.com/upload',
+   *   filePath: 'file:///path/to/file.jpg',
+   *   fieldName: 'photo',
+   *   fields: { albumId: '7' },
+   *   headers: { Authorization: 'Bearer token' },
+   * });
+   * console.log('Upload started with ID:', id);
+   * ```
+   */
+  uploadMultipart(options: UploadMultipartOptions): Promise<{ id: string }>;
 
   /**
    * Cancel and remove an ongoing upload.

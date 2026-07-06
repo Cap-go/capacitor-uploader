@@ -2,7 +2,7 @@ import { WebPlugin } from '@capacitor/core';
 import { openDB } from 'idb';
 
 import { PathHelper } from './PathHelper';
-import type { UploadFileOption, UploaderPlugin, uploadOption } from './definitions';
+import type { UploadFileOption, UploadMultipartOptions, UploaderPlugin, uploadOption } from './definitions';
 
 export class UploaderWeb extends WebPlugin implements UploaderPlugin {
   private uploads: Map<string, { controller: AbortController; retries: number }> = new Map();
@@ -18,6 +18,18 @@ export class UploaderWeb extends WebPlugin implements UploaderPlugin {
     this.doUpload(id, options);
 
     return { id };
+  }
+
+  async uploadMultipart(options: UploadMultipartOptions): Promise<{ id: string }> {
+    return this.startUpload({
+      filePath: options.filePath,
+      serverUrl: options.url,
+      headers: options.headers ?? {},
+      method: 'POST',
+      uploadType: 'multipart',
+      fileField: options.fieldName,
+      parameters: options.fields ?? {},
+    });
   }
 
   async removeUpload(options: { id: string }): Promise<void> {
