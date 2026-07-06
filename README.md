@@ -256,6 +256,7 @@ Documentation for the [Capacitor Camera preview](https://github.com/Cap-go/camer
 <docgen-index>
 
 * [`startUpload(...)`](#startupload)
+* [`uploadMultipart(...)`](#uploadmultipart)
 * [`removeUpload(...)`](#removeupload)
 * [`addListener('events', ...)`](#addlistenerevents-)
 * [`acknowledgeEvent(...)`](#acknowledgeevent)
@@ -301,6 +302,28 @@ Listen to upload events to track progress, completion, or failure.
 **Returns:** <code>Promise&lt;{ id: string; }&gt;</code>
 
 **Since:** 0.0.1
+
+--------------------
+
+
+### uploadMultipart(...)
+
+```typescript
+uploadMultipart(options: UploadMultipartOptions) => Promise<{ id: string; }>
+```
+
+Start uploading a single file as multipart/form-data.
+
+This is a convenience API for backends that expect a named file field and
+additional form fields. Existing `startUpload` binary uploads are unchanged.
+
+| Param         | Type                                                                      | Description                              |
+| ------------- | ------------------------------------------------------------------------- | ---------------------------------------- |
+| **`options`** | <code><a href="#uploadmultipartoptions">UploadMultipartOptions</a></code> | - Configuration for the multipart upload |
+
+**Returns:** <code>Promise&lt;{ id: string; }&gt;</code>
+
+**Since:** 8.3.2
 
 --------------------
 
@@ -417,6 +440,19 @@ Configuration options for uploading a file.
 | **`filePath`**  | <code>string</code> | The local file path of the file to upload. Can be a file:// URL or an absolute path.                                                                                | 0.0.3 |
 | **`fieldName`** | <code>string</code> | The form field name for the file part when using multipart upload. If omitted, <a href="#uploadoption">`uploadOption.fileField`</a> is used (defaults to `'file'`). | 0.0.3 |
 | **`mimeType`**  | <code>string</code> | The MIME type of this file. If not specified, the plugin will attempt to determine it automatically.                                                                | 0.0.3 |
+
+
+#### UploadMultipartOptions
+
+Options for starting a single-file multipart upload.
+
+| Prop            | Type                                    | Description                                                                          | Since |
+| --------------- | --------------------------------------- | ------------------------------------------------------------------------------------ | ----- |
+| **`url`**       | <code>string</code>                     | The server URL endpoint where the multipart request should be sent.                  | 8.3.2 |
+| **`filePath`**  | <code>string</code>                     | The local file path of the file to upload. Can be a file:// URL or an absolute path. | 8.3.2 |
+| **`fieldName`** | <code>string</code>                     | The form field name for the uploaded file part.                                      | 8.3.2 |
+| **`fields`**    | <code>{ [key: string]: string; }</code> | Additional form fields to include in the multipart request.                          | 8.3.2 |
+| **`headers`**   | <code>{ [key: string]: string; }</code> | HTTP headers to send with the upload request.                                        | 8.3.2 |
 
 
 #### PluginListenerHandle

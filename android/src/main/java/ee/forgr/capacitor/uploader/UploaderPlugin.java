@@ -259,6 +259,46 @@ public class UploaderPlugin extends Plugin {
     }
 
     @PluginMethod
+    public void uploadMultipart(PluginCall call) {
+        String serverUrl = call.getString("url");
+        if (serverUrl == null || serverUrl.isEmpty()) {
+            call.reject("Missing required parameter: url");
+            return;
+        }
+
+        String filePath = call.getString("filePath");
+        if (filePath == null || filePath.isEmpty()) {
+            call.reject("Missing required parameter: filePath");
+            return;
+        }
+
+        String fieldName = call.getString("fieldName");
+        if (fieldName == null || fieldName.isEmpty()) {
+            call.reject("Missing required parameter: fieldName");
+            return;
+        }
+
+        JSObject headersObj = call.getObject("headers", new JSObject());
+        JSObject fieldsObj = call.getObject("fields", new JSObject());
+        Map<String, String> headers = JSObjectToMap(headersObj);
+        Map<String, String> fields = JSObjectToMap(fieldsObj);
+
+        try {
+            String localFilePath = resolveCapacitorPath(filePath);
+            String mimeType = getMimeType(localFilePath);
+            ArrayList<Uploader.UploadFile> filesToUpload = new ArrayList<>();
+            filesToUpload.add(new Uploader.UploadFile(localFilePath, fieldName, mimeType));
+
+            String id = implementation.startUpload(filesToUpload, serverUrl, headers, fields, "POST", "File Upload", 2, "multipart");
+            JSObject result = new JSObject();
+            result.put("id", id);
+            call.resolve(result);
+        } catch (Exception e) {
+            call.reject(e.getMessage());
+        }
+    }
+
+    @PluginMethod
     public void removeUpload(PluginCall call) {
         String id = call.getString("id");
         if (id == null || id.isEmpty()) {

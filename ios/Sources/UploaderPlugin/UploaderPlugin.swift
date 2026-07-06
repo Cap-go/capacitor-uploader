@@ -8,6 +8,7 @@ public class UploaderPlugin: CAPPlugin, CAPBridgedPlugin {
     public let jsName = "Uploader"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "startUpload", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "uploadMultipart", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "removeUpload", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getPluginVersion", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "acknowledgeEvent", returnType: CAPPluginReturnPromise)
@@ -65,6 +66,40 @@ public class UploaderPlugin: CAPPlugin, CAPBridgedPlugin {
                 call.resolve(["id": id])
             } catch {
                 call.reject("Failed to start upload: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    @objc func uploadMultipart(_ call: CAPPluginCall) {
+        guard let serverUrl = call.getString("url"), !serverUrl.isEmpty else {
+            call.reject("Missing required parameter: url")
+            return
+        }
+        guard let filePath = call.getString("filePath"), !filePath.isEmpty else {
+            call.reject("Missing required parameter: filePath")
+            return
+        }
+        guard let fieldName = call.getString("fieldName"), !fieldName.isEmpty else {
+            call.reject("Missing required parameter: fieldName")
+            return
+        }
+
+        let headers = (call.getObject("headers") ?? [:]).compactMapValues { $0 as? String }
+        let fields = (call.getObject("fields") ?? [:]).compactMapValues { $0 as? String }
+        let options: [String: Any] = [
+            "headers": headers,
+            "parameters": fields,
+            "method": "POST",
+            "uploadType": "multipart",
+            "fileField": fieldName
+        ]
+
+        Task {
+            do {
+                let id = try await implementation.startUpload(filePath, serverUrl, options, maxRetries: 3)
+                call.resolve(["id": id])
+            } catch {
+                call.reject("Failed to start multipart upload: \(error.localizedDescription)")
             }
         }
     }
