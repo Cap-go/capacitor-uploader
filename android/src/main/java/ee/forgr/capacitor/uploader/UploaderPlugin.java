@@ -1,5 +1,6 @@
 package ee.forgr.capacitor.uploader;
 
+import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
@@ -14,14 +15,18 @@ import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import kotlin.jvm.functions.Function1;
 import net.gotev.uploadservice.data.UploadInfo;
 import net.gotev.uploadservice.network.ServerResponse;
-import net.gotev.uploadservice.observer.request.RequestObserver;
+import net.gotev.uploadservice.observer.request.GlobalRequestObserver;
 import net.gotev.uploadservice.observer.request.RequestObserverDelegate;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -45,44 +50,60 @@ public class UploaderPlugin extends Plugin {
     private static final String PENDING_EVENTS_KEY = "pending_events";
     private static final String TAG = "UploaderPlugin";
 
-    private void saveEventToPrefs(String eventId, JSObject event) {
-        SharedPreferences prefs = getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        String existingJson = prefs.getString(PENDING_EVENTS_KEY, "{}");
-        try {
-            JSONObject pendingEvents = new JSONObject(existingJson);
-            pendingEvents.put(eventId, new JSONObject(event.toString()));
-            prefs.edit().putString(PENDING_EVENTS_KEY, pendingEvents.toString()).apply();
-        } catch (JSONException e) {
-            Log.e(TAG, "Failed to persist upload event", e);
+    // Process-scoped: one observer for the process, filtered to plugin-owned uploads.
+    private static final Set<String> OWNED_UPLOAD_IDS = ConcurrentHashMap.newKeySet();
+    private static final Object PENDING_EVENTS_LOCK = new Object();
+    private static final Object OBSERVER_LOCK = new Object();
+    private static GlobalRequestObserver processObserver;
+    private static Uploader processUploader;
+    private static WeakReference<UploaderPlugin> activePlugin = new WeakReference<>(null);
+    // Cleared in handleOnDestroy so emitEvent no-ops while Activity/Bridge is tearing down.
+    private static volatile boolean pluginAttached = false;
+
+    private static void saveEventToPrefs(Context context, String eventId, JSObject event) {
+        synchronized (PENDING_EVENTS_LOCK) {
+            SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            String existingJson = prefs.getString(PENDING_EVENTS_KEY, "{}");
+            try {
+                JSONObject pendingEvents = new JSONObject(existingJson);
+                pendingEvents.put(eventId, new JSONObject(event.toString()));
+                prefs.edit().putString(PENDING_EVENTS_KEY, pendingEvents.toString()).apply();
+            } catch (JSONException e) {
+                Log.e(TAG, "Failed to persist upload event", e);
+            }
         }
     }
 
-    private void removeEventFromPrefs(String eventId) {
-        SharedPreferences prefs = getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        String existingJson = prefs.getString(PENDING_EVENTS_KEY, "{}");
-        try {
-            JSONObject pendingEvents = new JSONObject(existingJson);
-            pendingEvents.remove(eventId);
-            prefs.edit().putString(PENDING_EVENTS_KEY, pendingEvents.toString()).apply();
-        } catch (JSONException e) {
-            Log.e(TAG, "Failed to remove upload event from prefs", e);
+    private static void removeEventFromPrefs(Context context, String eventId) {
+        synchronized (PENDING_EVENTS_LOCK) {
+            SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            String existingJson = prefs.getString(PENDING_EVENTS_KEY, "{}");
+            try {
+                JSONObject pendingEvents = new JSONObject(existingJson);
+                pendingEvents.remove(eventId);
+                prefs.edit().putString(PENDING_EVENTS_KEY, pendingEvents.toString()).apply();
+            } catch (JSONException e) {
+                Log.e(TAG, "Failed to remove upload event from prefs", e);
+            }
         }
     }
 
     private void replayPendingEvents() {
-        SharedPreferences prefs = getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        String existingJson = prefs.getString(PENDING_EVENTS_KEY, "{}");
-        try {
-            JSONObject pendingEvents = new JSONObject(existingJson);
-            Iterator<String> keys = pendingEvents.keys();
-            while (keys.hasNext()) {
-                String eventId = keys.next();
-                JSONObject eventJson = pendingEvents.getJSONObject(eventId);
-                JSObject event = JSObject.fromJSONObject(eventJson);
-                notifyListeners("events", event);
+        synchronized (PENDING_EVENTS_LOCK) {
+            SharedPreferences prefs = getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            String existingJson = prefs.getString(PENDING_EVENTS_KEY, "{}");
+            try {
+                JSONObject pendingEvents = new JSONObject(existingJson);
+                Iterator<String> keys = pendingEvents.keys();
+                while (keys.hasNext()) {
+                    String eventId = keys.next();
+                    JSONObject eventJson = pendingEvents.getJSONObject(eventId);
+                    JSObject event = JSObject.fromJSONObject(eventJson);
+                    notifyListeners("events", event, true);
+                }
+            } catch (JSONException e) {
+                Log.e(TAG, "Failed to replay pending upload events", e);
             }
-        } catch (JSONException e) {
-            Log.e(TAG, "Failed to replay pending upload events", e);
         }
     }
 
@@ -97,74 +118,133 @@ public class UploaderPlugin extends Plugin {
         }
     }
 
+    private static UploaderPlugin currentPlugin() {
+        return activePlugin.get();
+    }
+
+    private static void emitEvent(String name, JSObject event, boolean retainUntilConsumed) {
+        if (!pluginAttached) {
+            return;
+        }
+        UploaderPlugin plugin = currentPlugin();
+        if (plugin == null || plugin.getBridge() == null) {
+            return;
+        }
+        if (retainUntilConsumed) {
+            plugin.notifyListeners(name, event, true);
+        } else {
+            plugin.notifyListeners(name, event);
+        }
+    }
+
+    private static void clearTempBody(String uploadId) {
+        if (processUploader != null) {
+            processUploader.clearTempMultipartBody(uploadId);
+        }
+    }
+
+    private static void releaseUpload(String uploadId) {
+        clearTempBody(uploadId);
+        OWNED_UPLOAD_IDS.remove(uploadId);
+    }
+
+    private static void ensureProcessObserver(Application application) {
+        synchronized (OBSERVER_LOCK) {
+            if (processObserver != null) {
+                return;
+            }
+            if (processUploader == null) {
+                processUploader = new Uploader(application);
+            }
+            // Keep observer for process lifetime. Weak plugin ref avoids retaining Bridge/WebView
+            // after Activity destroy; register once to avoid duplicate receivers.
+            processObserver = new GlobalRequestObserver(
+                application,
+                new RequestObserverDelegate() {
+                    @Override
+                    public void onProgress(Context context, UploadInfo uploadInfo) {
+                        JSObject event = new JSObject();
+                        event.put("name", "uploading");
+                        JSObject payload = new JSObject();
+                        payload.put("percent", uploadInfo.getProgressPercent());
+                        event.put("payload", payload);
+                        event.put("id", uploadInfo.getUploadId());
+                        emitEvent("events", event, false);
+                    }
+
+                    @Override
+                    public void onSuccess(Context context, UploadInfo uploadInfo, ServerResponse serverResponse) {
+                        clearTempBody(uploadInfo.getUploadId());
+                        JSObject event = new JSObject();
+                        event.put("name", "completed");
+                        JSObject payload = new JSObject();
+                        payload.put("statusCode", serverResponse.getCode());
+                        event.put("payload", payload);
+                        event.put("id", uploadInfo.getUploadId());
+                        String eventId = UUID.randomUUID().toString();
+                        event.put("eventId", eventId);
+                        saveEventToPrefs(context, eventId, event);
+                        emitEvent("events", event, true);
+                    }
+
+                    @Override
+                    public void onError(Context context, UploadInfo uploadInfo, Throwable exception) {
+                        clearTempBody(uploadInfo.getUploadId());
+                        JSObject event = new JSObject();
+                        event.put("name", "failed");
+                        JSObject payload = new JSObject();
+                        payload.put("error", exception.getMessage());
+                        event.put("payload", payload);
+                        event.put("id", uploadInfo.getUploadId());
+                        String eventId = UUID.randomUUID().toString();
+                        event.put("eventId", eventId);
+                        saveEventToPrefs(context, eventId, event);
+                        emitEvent("events", event, true);
+                    }
+
+                    @Override
+                    public void onCompleted(Context context, UploadInfo uploadInfo) {
+                        releaseUpload(uploadInfo.getUploadId());
+                        JSObject event = new JSObject();
+                        event.put("name", "finished");
+                        event.put("id", uploadInfo.getUploadId());
+                        emitEvent("events", event, false);
+                    }
+
+                    @Override
+                    public void onCompletedWhileNotObserving() {
+                        if (!pluginAttached) {
+                            return;
+                        }
+                        UploaderPlugin plugin = currentPlugin();
+                        if (plugin != null && plugin.getBridge() != null) {
+                            plugin.replayPendingEvents();
+                        }
+                    }
+                },
+                (Function1<UploadInfo, Boolean>) (uploadInfo) -> OWNED_UPLOAD_IDS.contains(uploadInfo.getUploadId())
+            );
+        }
+    }
+
     @Override
     public void load() {
         createNotificationChannel();
-
-        // Create a request observer for all uploads
-        RequestObserver observer = new RequestObserver(
-            getContext().getApplicationContext(),
-            getActivity(),
-            new RequestObserverDelegate() {
-                @Override
-                public void onProgress(Context context, UploadInfo uploadInfo) {
-                    JSObject event = new JSObject();
-                    event.put("name", "uploading");
-                    JSObject payload = new JSObject();
-                    payload.put("percent", uploadInfo.getProgressPercent());
-                    event.put("payload", payload);
-                    event.put("id", uploadInfo.getUploadId());
-                    notifyListeners("events", event);
-                }
-
-                @Override
-                public void onSuccess(Context context, UploadInfo uploadInfo, ServerResponse serverResponse) {
-                    implementation.clearTempMultipartBody(uploadInfo.getUploadId());
-                    JSObject event = new JSObject();
-                    event.put("name", "completed");
-                    JSObject payload = new JSObject();
-                    payload.put("statusCode", serverResponse.getCode());
-                    event.put("payload", payload);
-                    event.put("id", uploadInfo.getUploadId());
-                    String eventId = UUID.randomUUID().toString();
-                    event.put("eventId", eventId);
-                    saveEventToPrefs(eventId, event);
-                    notifyListeners("events", event);
-                }
-
-                @Override
-                public void onError(Context context, UploadInfo uploadInfo, Throwable exception) {
-                    implementation.clearTempMultipartBody(uploadInfo.getUploadId());
-                    JSObject event = new JSObject();
-                    event.put("name", "failed");
-                    JSObject payload = new JSObject();
-                    payload.put("error", exception.getMessage());
-                    event.put("payload", payload);
-                    event.put("id", uploadInfo.getUploadId());
-                    String eventId = UUID.randomUUID().toString();
-                    event.put("eventId", eventId);
-                    saveEventToPrefs(eventId, event);
-                    notifyListeners("events", event);
-                }
-
-                @Override
-                public void onCompleted(Context context, UploadInfo uploadInfo) {
-                    implementation.clearTempMultipartBody(uploadInfo.getUploadId());
-                    JSObject event = new JSObject();
-                    event.put("name", "finished");
-                    event.put("id", uploadInfo.getUploadId());
-                    notifyListeners("events", event);
-                }
-
-                @Override
-                public void onCompletedWhileNotObserving() {
-                    replayPendingEvents();
-                }
-            }
-        );
-
-        implementation = new Uploader(getContext().getApplicationContext());
+        activePlugin = new WeakReference<>(this);
+        pluginAttached = true;
+        ensureProcessObserver(getActivity().getApplication());
+        implementation = processUploader;
         replayPendingEvents();
+    }
+
+    @Override
+    protected void handleOnDestroy() {
+        // Detach the plugin sink only — keep processObserver registered for background uploads.
+        if (activePlugin.get() == this) {
+            pluginAttached = false;
+            activePlugin.clear();
+        }
+        super.handleOnDestroy();
     }
 
     public static String getMimeType(String url) {
@@ -250,6 +330,7 @@ public class UploaderPlugin extends Plugin {
                 maxRetries,
                 uploadType
             );
+            OWNED_UPLOAD_IDS.add(id);
             JSObject result = new JSObject();
             result.put("id", id);
             call.resolve(result);
@@ -290,6 +371,7 @@ public class UploaderPlugin extends Plugin {
             filesToUpload.add(new Uploader.UploadFile(localFilePath, fieldName, mimeType));
 
             String id = implementation.startUpload(filesToUpload, serverUrl, headers, fields, "POST", "File Upload", 2, "multipart");
+            OWNED_UPLOAD_IDS.add(id);
             JSObject result = new JSObject();
             result.put("id", id);
             call.resolve(result);
@@ -306,6 +388,7 @@ public class UploaderPlugin extends Plugin {
             return;
         }
         try {
+            OWNED_UPLOAD_IDS.remove(id);
             implementation.removeUpload(id);
             call.resolve();
         } catch (Exception e) {
@@ -369,7 +452,7 @@ public class UploaderPlugin extends Plugin {
             call.reject("Missing required parameter: eventId");
             return;
         }
-        removeEventFromPrefs(eventId);
+        removeEventFromPrefs(getContext(), eventId);
         call.resolve();
     }
 
