@@ -1,13 +1,28 @@
 # @capgo/capacitor-uploader
-Upload files in the background with progress tracking, resumable uploads, and network-aware handling for Capacitor apps.
 
+Upload files from your Capacitor app with native background uploads that keep going when the app is closed, with progress events and retries.
 
-<a href="https://capgo.app/"><img src="https://capgo.app/readme-banner.svg?repo=Cap-go/capacitor-uploader" alt="Capgo - Instant updates for Capacitor" /></a>
- 
+<a href="https://capgo.app/?ref=plugin_uploader"><img src="https://capgo.app/readme-banner.svg?repo=Cap-go/capacitor-uploader" alt="Capgo - Instant updates for Capacitor" /></a>
+
 <div align="center">
-  <h2><a href="https://capgo.app/?ref=plugin_uploader"> ➡️ Get Instant updates for your App with Capgo</a></h2>
-  <h2><a href="https://capgo.app/consulting/?ref=plugin_uploader"> Missing a feature? We’ll build the plugin for you 💪</a></h2>
+  <p><b>Capgo</b>: open-source live updates for Ionic and Capacitor apps. Ship OTA fixes and features instantly, without waiting for app store review.</p>
+  <h2><a href="https://capgo.app/register/?ref=plugin_uploader">➡️ Get started for free</a></h2>
+  <p>14-day unlimited free trial. No credit card required</p>
+  <p><a href="https://capgo.app/consulting/?ref=plugin_uploader">Missing a feature? We'll build the plugin for you 💪</a></p>
 </div>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Cap-go/capacitor-uploader/main/assets/github-social-preview.png" alt="@capgo/capacitor-uploader for Capacitor apps" width="300" />
+</p>
+
+## Key features
+
+- **Uploads**: `startUpload()` sends a file with `PUT` or `POST`, custom headers and parameters.
+- **Multipart**: `uploadMultipart()` sends a file as `multipart/form-data`.
+- **Progress events**: the `events` listener reports progress, completion and errors.
+- **Control**: `removeUpload()` cancels an upload, `maxRetries` retries failures.
+- **Background**: a background `URLSession` on iOS and an upload service with a notification on Android.
+- **Platforms**: iOS and Android. Not available on web.
 
 ## Uploader Plugin
 
