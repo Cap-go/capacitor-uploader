@@ -38,7 +38,7 @@ public class UploaderPlugin extends Plugin {
 
     private static final String CAPACITOR_CONTENT_PATH_PREFIX = "/_capacitor_content_";
 
-    private final String pluginVersion = "8.3.20";
+    private final String pluginVersion = "8.3.21";
 
     private Uploader implementation;
 
