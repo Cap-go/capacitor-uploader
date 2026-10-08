@@ -22,7 +22,7 @@ Upload files from your Capacitor app with native background uploads that keep go
 - **Progress events**: the `events` listener reports progress, completion and errors.
 - **Control**: `removeUpload()` cancels an upload, `maxRetries` retries failures.
 - **Background**: a background `URLSession` on iOS and an upload service with a notification on Android.
-- **Platforms**: iOS and Android. Not available on web.
+- **Platforms**: iOS, Android and Web. Web uploads with `fetch()` while the page is open, without native background uploads.
 
 ## Uploader Plugin
 
